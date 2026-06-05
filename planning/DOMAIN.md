@@ -1,66 +1,33 @@
-# Domain Context
+# Group Meet — Domain Context
 
-This file captures the operating context for Group Meet.
-
----
-
-## Client
-
-Private
-
----
-
-## Business Goal
-
-Group Meet lets external Participants request a meeting with a team, then automatically confirms the booking once one Leader and one Support have both indicated availability for the same time slot.
-
----
-
-## Project Type
-
-Internal tool
-
----
-
-## Primary Users / Roles
-
-TBD.
-
----
-
-## Secondary Users / Roles
-
-TBD.
-
----
-
-## Current Workflow
-
-TBD.
-
----
-
-## Target Workflow
-
-TBD.
-
----
+## Core Concept
+A meeting in Group Meet requires **quorum**: at least one team member with the role of **Leader** and at least one with the role of **Support** must both select the same proposed time slot. When quorum is detected, the meeting is automatically confirmed.
 
 ## Key Terms
 
-TBD.
+| Term | Meaning |
+|---|---|
+| Participant | External person requesting the meeting. No account required. |
+| Leader | Internal team member. One required per confirmed meeting. |
+| Support | Internal team member. One required per confirmed meeting. |
+| Time Slot | A proposed date + start time + end time submitted by the Participant. |
+| Response | A team member's vote indicating availability for a specific slot. |
+| Quorum | The condition where ≥1 Leader and ≥1 Support have both responded to the same slot. |
+| Confirmed Slot | The earliest time slot that has achieved quorum. |
+| Voting Link | A unique URL sent to each team member: `/team/meetings/[id]?member=[uuid]` |
 
----
+## Status Lifecycle
+```
+pending → confirmed
+```
+- `pending`: Meeting created, awaiting team votes
+- `confirmed`: Quorum met, slot locked, emails sent
+- `cancelled`: Reserved for Phase 2
 
-## Business Rules
-
-TBD.
-
----
-
-## Known Constraints
-
-- Tech stack: - Next.js 14 (App Router)- TypeScript- Supabase (Postgres + Row Level Security)- Vercel (hosting)- Resend (transactional email)- shadcn/ui + Tailwind CSS- react-hook-form + zod- date-fns
-- Implementation repo: Downloaded project folder
-- Canonical GitHub repo: https://github.com/NaNo8831/Group-Meet
-- Do not invent unknown business details. Keep them as `TBD` until the Architect Layer documents them.
+## Quorum Logic (plain language)
+After every new response is saved:
+1. Loop through all time slots for the meeting, ordered by earliest first
+2. For each slot, check if there is at least one Leader response AND at least one Support response
+3. If yes → that slot is the confirmed slot. Stop checking.
+4. If no → continue to next slot
+5. If no slot qualifies → do nothing, wait for more votes
