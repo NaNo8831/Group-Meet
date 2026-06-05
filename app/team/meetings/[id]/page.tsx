@@ -9,13 +9,14 @@ interface TeamMeetingPageProps {
   params: {
     id: string;
   };
-  searchParams: {
+  searchParams: Promise<{
     member?: string;
-  };
+  }>;
 }
 
 export default async function TeamMeetingPage({ params, searchParams }: TeamMeetingPageProps) {
-  const memberId = searchParams.member;
+  const resolvedSearchParams = await searchParams;
+  const memberId = resolvedSearchParams.member;
 
   if (!memberId) {
     return <PageMessage title="Voting link incomplete" message="This link is missing a team member identifier." />;
