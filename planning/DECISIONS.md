@@ -35,3 +35,8 @@
 **Decision:** Deliver the complete shippable v1 in one sprint.
 **Why:** App is well-scoped, data model is clear, no ambiguous features in Phase 1.
 **Trade-off:** Sprint is larger than a typical first sprint — Builder should work feature by feature in the order defined in handoff-prompt.md.
+
+## D-008: Keep Next.js 14 for Sprint 001
+**Decision:** Use Next.js 14 App Router as specified by the Sprint 001 stack.
+**Why:** The handoff and acceptance criteria explicitly require Next.js 14.
+**Trade-off:** `npm audit` reports Next.js advisories whose automated fix is a major upgrade to Next 16. Revisit during a dedicated dependency/security sprint.

@@ -32,3 +32,10 @@
 **Impact:** Low — wastes team bandwidth
 **Mitigation (Phase 1):** No deduplication logic. Accept as known limitation.
 **Phase 2 plan:** Add email-based deduplication check within a time window.
+
+## R-006: Next.js 14 dependency advisories
+**Risk:** `npm audit` reports advisories against the requested Next.js 14 stack.
+**Likelihood:** Medium
+**Impact:** Medium–High depending on deployment exposure and affected features.
+**Mitigation (Phase 1):** Keep the requested Next.js 14 scope, avoid middleware/image configuration not needed by v1, and deploy behind Vercel defaults.
+**Phase 2 plan:** Plan a framework upgrade sprint and retest the MVP on the current supported Next.js major version.

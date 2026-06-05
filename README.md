@@ -33,23 +33,20 @@ It is ready for project-specific discovery and architecture planning.
 
 ## Current Status
 
-- Project folder created from the reusable 120x scaffold.
-- Starter docs have been personalized from CLI metadata.
-- No application code has been written yet.
-- Next workflow step is Architect Pack 001 for discovery and architecture planning.
+- Sprint 001 MVP application has been implemented on the Next.js 14 App Router stack.
+- Supabase schema and seed SQL are available under `supabase/`.
+- Local validation passed: `npm run build` and a dev-server smoke test.
+- Live end-to-end validation still requires Supabase, Resend, and Vercel environment configuration.
 
 ---
 
 ## Next Steps
 
-1. Review `project-start.md`.
-2. Open `architect-chat-starter-prompt.md`.
-3. Start a new Architect chat.
-4. Start Architect Pack 001 discovery.
-5. Generate Architect Pack 001 only after explicit approval.
-6. Save the Architect Pack in `planning/architect-packs/`.
-7. Dry-run the importer.
-8. Apply the Architect Pack after review.
+1. Create or open the Supabase project.
+2. Run `supabase/schema.sql`, then `supabase/seed.sql`.
+3. Copy `.env.example` to `.env.local` and fill in Supabase, Resend, and app URL values.
+4. Run `npm run dev`.
+5. Deploy to Vercel after setting the same environment variables.
 
 Dry-run command shape:
 

@@ -49,3 +49,24 @@ Team Member (email link)
 - **Database:** Supabase (managed Postgres, Sydney or nearest region)
 - **Email:** Resend (transactional, SMTP-free)
 - **Repo:** https://github.com/NaNo8831/Group-Meet
+
+## Implemented Files
+- `app/page.tsx` — participant request form with react-hook-form and zod validation.
+- `app/meetings/[id]/page.tsx` — public participant status page.
+- `app/team/meetings/[id]/page.tsx` and `TeamVotingForm.tsx` — team voting page and client-side submit flow.
+- `app/api/meetings/route.ts` — meeting creation, slot insertion, active team lookup, team notification emails.
+- `app/api/responses/route.ts` — response upsert, pending-state guard, quorum check, confirmation update, confirmation emails.
+- `lib/quorum.ts` — earliest qualifying slot check.
+- `lib/email.ts` — Resend helpers with non-fatal error logging.
+- `supabase/schema.sql` and `supabase/seed.sql` — database tables, RLS policies, indexes, and initial Leader/Support seed data.
+
+## Runtime Configuration
+The app requires these environment variables in local development and Vercel:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+RESEND_API_KEY=
+NEXT_PUBLIC_APP_URL=
+```

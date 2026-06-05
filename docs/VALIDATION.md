@@ -3,6 +3,14 @@
 ## Approach
 Phase 1 uses manual end-to-end testing. No automated test suite is required for v1 launch. The acceptance criteria in `planning/sprints/001-discovery-architecture/acceptance.md` serve as the validation checklist.
 
+## Builder Validation Run — 2026-06-05
+
+- `npm install` completed and generated `package-lock.json`.
+- `npm run build` completed successfully with zero TypeScript errors.
+- `npm run dev -- --hostname 127.0.0.1 --port 3000` smoke test returned HTTP 200 for `/`.
+- `npm audit --json` completed; reported advisories remain because the available automated fix upgrades Next.js beyond the Sprint 001 Next.js 14 scope.
+- Full Supabase/Resend email flow was not exercised locally because service credentials and a live Supabase project were not available in the repo.
+
 ## Critical Paths to Test Manually
 
 ### Path 1: Happy path — quorum on first two votes
