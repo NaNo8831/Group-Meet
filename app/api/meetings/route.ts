@@ -4,6 +4,19 @@ import { createServiceSupabaseClient } from "@/lib/supabase";
 import type { Meeting, TeamMember, TimeSlot } from "@/lib/types";
 import { createMeetingSchema } from "@/lib/validation";
 
+function getAppOrigin(request: Request) {
+  const origin = request.headers.get("origin");
+
+  if (origin) {
+    return origin;
+  }
+
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const protocol = request.headers.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+
+  return host ? `${protocol}://${host}` : "http://localhost:3000";
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = createMeetingSchema.safeParse(body);
@@ -14,6 +27,7 @@ export async function POST(request: Request) {
 
   const supabase = createServiceSupabaseClient();
   const { participantName, participantEmail, topic, slots } = parsed.data;
+  const appOrigin = getAppOrigin(request);
 
   const { data: meeting, error: meetingError } = await supabase
     .from("meetings")
@@ -60,7 +74,8 @@ export async function POST(request: Request) {
       sendTeamNotificationEmail({
         meeting: meeting as Meeting,
         slots: createdSlots as TimeSlot[],
-        member
+        member,
+        appOrigin
       })
     )
   );

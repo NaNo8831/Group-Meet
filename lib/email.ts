@@ -4,10 +4,6 @@ import type { Meeting, TeamMember, TimeSlot } from "./types";
 
 const fromAddress = "Group Meet <onboarding@resend.dev>";
 
-function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-}
-
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY;
 
@@ -44,8 +40,9 @@ export async function sendTeamNotificationEmail(input: {
   meeting: Meeting;
   slots: TimeSlot[];
   member: TeamMember;
+  appOrigin: string;
 }) {
-  const votingLink = `${getAppUrl()}/team/meetings/${input.meeting.id}?member=${input.member.id}`;
+  const votingLink = `${input.appOrigin}/team/meetings/${input.meeting.id}?member=${input.member.id}`;
   const slotList = input.slots.map((slot) => `- ${formatSlot(slot)}`).join("\n");
 
   await sendEmail({

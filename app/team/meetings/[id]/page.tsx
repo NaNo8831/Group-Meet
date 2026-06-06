@@ -5,16 +5,19 @@ import { TeamVotingForm } from "./TeamVotingForm";
 
 export const dynamic = "force-dynamic";
 
+type MaybePromise<T> = T | Promise<T>;
+
 interface TeamMeetingPageProps {
-  params: {
+  params: MaybePromise<{
     id: string;
-  };
-  searchParams: Promise<{
+  }>;
+  searchParams: MaybePromise<{
     member?: string;
   }>;
 }
 
 export default async function TeamMeetingPage({ params, searchParams }: TeamMeetingPageProps) {
+  const { id } = await params;
   const resolvedSearchParams = await searchParams;
   const memberId = resolvedSearchParams.member;
 
@@ -23,18 +26,52 @@ export default async function TeamMeetingPage({ params, searchParams }: TeamMeet
   }
 
   const supabase = createPublicSupabaseClient();
-  const [{ data: meeting }, { data: member }, { data: slots }] = await Promise.all([
-    supabase.from("meetings").select("*").eq("id", params.id).maybeSingle(),
+  const [
+    { data: meeting, error: meetingError },
+    { data: member, error: memberError },
+    { data: slots, error: slotsError }
+  ] = await Promise.all([
+    supabase.from("meetings").select("*").eq("id", id).maybeSingle(),
     supabase.from("team_members").select("*").eq("id", memberId).eq("is_active", true).maybeSingle(),
-    supabase.from("time_slots").select("*").eq("meeting_id", params.id).order("starts_at", { ascending: true })
+    supabase.from("time_slots").select("*").eq("meeting_id", id).order("starts_at", { ascending: true })
   ]);
+
+  if (meetingError) {
+    console.error("Unable to load meeting for voting", meetingError);
+    return (
+      <PageMessage
+        title="Unable to load meeting"
+        message="We could not load this meeting right now. Please try the link again shortly."
+      />
+    );
+  }
 
   if (!meeting) {
     return <PageMessage title="Meeting not found" message="The meeting link is invalid or no longer available." />;
   }
 
+  if (memberError) {
+    console.error("Unable to load team member for voting", memberError);
+    return (
+      <PageMessage
+        title="Unable to load team member"
+        message="We could not verify this voting link right now. Please try again shortly."
+      />
+    );
+  }
+
   if (!member) {
     return <PageMessage title="Team member not found" message="This voting link does not match an active team member." />;
+  }
+
+  if (slotsError) {
+    console.error("Unable to load meeting slots for voting", slotsError);
+    return (
+      <PageMessage
+        title="Unable to load proposed times"
+        message="We could not load the proposed meeting times right now. Please try again shortly."
+      />
+    );
   }
 
   const typedMeeting = meeting as Meeting;
