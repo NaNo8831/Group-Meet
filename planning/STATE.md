@@ -1,7 +1,7 @@
 # Group Meet — Project State
 
-**Last Updated:** 2026-06-05 — Sprint 001 params/error fix implemented
-**Status:** SPRINT 001 IMPLEMENTED — Next.js 16 params/error fixes validated locally; deployment still requires service configuration
+**Last Updated:** 2026-06-06 — Sprint 002 data model draft completed
+**Status:** SPRINT 002 DOCUMENTED — Future domain data model drafted; no application code or migrations changed
 
 ## What Exists
 - GitHub repo: https://github.com/NaNo8831/Group-Meet
@@ -15,6 +15,15 @@
 - Local validation completed: `npm run build`, dev server smoke test
 - Dynamic meeting/status routes now await Next.js 16 `params`/`searchParams`
 - Supabase page-load errors now log and render clean user-facing error messages
+- Future domain data model draft at `docs/DATA_MODEL.md`
+
+## Sprint 002 Goal
+Draft a planning-only future data model that supports the domain workflow in `planning/DOMAIN.md`:
+- Future entities documented: `requests`, `slots`, `professionals`, `professional_responses`, `pairings`, `admins`, `magic_links`, `email_templates`, `platform_settings`
+- Enum definitions documented for request status, meeting type, professional tier, professional role, role preference, admin role, magic link types, and email templates
+- Existing Sprint 001 tables identified as legacy in open questions
+- Migration strategy explicitly deferred to a future sprint
+- No application code, migration files, schema files, or SQL changed
 
 ## Sprint 001 Goal
 Deliver a fully working Group Meet v1:
@@ -36,3 +45,8 @@ Deliver a fully working Group Meet v1:
 
 ## Next After Sprint 001
 - Phase 2 planning: magic link auth, calendar integration (.ics), admin dashboard
+
+## Next After Sprint 002
+- Architect/operator review of `docs/DATA_MODEL.md`
+- Resolve open questions before writing migrations
+- Future sprint to decide legacy table migration strategy for `team_members`, `meetings`, `time_slots`, and `responses`
