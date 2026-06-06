@@ -1,27 +1,35 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { firstName, formatSlot } from "@/lib/format";
 import { createPublicSupabaseClient } from "@/lib/supabase";
 import type { Meeting, TeamMember, TimeSlot } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+type MaybePromise<T> = T | Promise<T>;
+
 interface MeetingPageProps {
-  params: {
+  params: MaybePromise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function MeetingStatusPage({ params }: MeetingPageProps) {
+  const { id } = await params;
   const supabase = createPublicSupabaseClient();
-  const { data: meeting, error } = await supabase.from("meetings").select("*").eq("id", params.id).maybeSingle();
+  const { data: meeting, error } = await supabase.from("meetings").select("*").eq("id", id).maybeSingle();
 
   if (error) {
-    notFound();
+    console.error("Unable to load meeting status", error);
+    return (
+      <PageMessage
+        title="Unable to load meeting"
+        message="We could not load this meeting right now. Please try the link again shortly."
+      />
+    );
   }
 
   if (!meeting) {
-    return <NotFoundMessage />;
+    return <PageMessage title="Meeting not found" message="The meeting link is invalid or no longer available." />;
   }
 
   let confirmedSlot: TimeSlot | null = null;
@@ -90,12 +98,12 @@ export default async function MeetingStatusPage({ params }: MeetingPageProps) {
   );
 }
 
-function NotFoundMessage() {
+function PageMessage({ title, message }: { title: string; message: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8">
       <section className="max-w-md rounded-lg border bg-white p-6 text-center shadow-sm">
-        <h1 className="text-2xl font-semibold">Meeting not found</h1>
-        <p className="mt-3 text-muted-foreground">The meeting link is invalid or no longer available.</p>
+        <h1 className="text-2xl font-semibold">{title}</h1>
+        <p className="mt-3 text-muted-foreground">{message}</p>
         <Link className="mt-5 inline-flex rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground" href="/">
           New request
         </Link>

@@ -40,3 +40,8 @@
 **Decision:** Use Next.js 14 App Router as specified by the Sprint 001 stack.
 **Why:** The handoff and acceptance criteria explicitly require Next.js 14.
 **Trade-off:** `npm audit` reports Next.js advisories whose automated fix is a major upgrade to Next 16. Revisit during a dedicated dependency/security sprint.
+
+## D-009: Upgrade runtime to Next.js 16.2.7
+**Decision:** Upgrade the application runtime from Next.js 14 to Next.js 16.2.7.
+**Why:** The installed app runtime is Next.js 16.2.7, and deployment behavior must match the actual runtime.
+**Trade-off:** Dynamic App Router `params` and `searchParams` are asynchronous in Next.js 15+, so dynamic pages must await them before querying Supabase. `eslint-config-next` should be kept aligned with the installed Next.js version.

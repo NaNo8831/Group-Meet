@@ -1,11 +1,11 @@
 # Group Meet — Project State
 
-**Last Updated:** 2026-06-05 — Sprint 001 Builder implementation complete
-**Status:** SPRINT 001 IMPLEMENTED — local build/dev validation complete; deployment still requires service configuration
+**Last Updated:** 2026-06-05 — Sprint 001 params/error fix implemented
+**Status:** SPRINT 001 IMPLEMENTED — Next.js 16 params/error fixes validated locally; deployment still requires service configuration
 
 ## What Exists
 - GitHub repo: https://github.com/NaNo8831/Group-Meet
-- Next.js 14 App Router application scaffold
+- Next.js 16.2.7 App Router application scaffold
 - Participant request form at `/`
 - Participant status page at `/meetings/[id]`
 - Team voting page at `/team/meetings/[id]?member=[uuid]`
@@ -13,6 +13,8 @@
 - Supabase schema and seed files under `supabase/`
 - Resend email helper functions for team notification and confirmations
 - Local validation completed: `npm run build`, dev server smoke test
+- Dynamic meeting/status routes now await Next.js 16 `params`/`searchParams`
+- Supabase page-load errors now log and render clean user-facing error messages
 
 ## Sprint 001 Goal
 Deliver a fully working Group Meet v1:
@@ -30,7 +32,7 @@ Deliver a fully working Group Meet v1:
 - Supabase connection string/keys must be added to `.env.local` and Vercel env vars
 - Resend account/API key and verified sending domain must be configured
 - Vercel project must be linked to GitHub repo and deployed
-- npm audit reports Next.js 14 advisories that require a major Next upgrade to fully clear
+- npm audit still reports dependency advisories that require follow-up review
 
 ## Next After Sprint 001
 - Phase 2 planning: magic link auth, calendar integration (.ics), admin dashboard
