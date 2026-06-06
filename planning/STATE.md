@@ -1,7 +1,7 @@
 # Group Meet — Project State
 
-**Last Updated:** 2026-06-06 — Sprint 002 data model draft completed
-**Status:** SPRINT 002 DOCUMENTED — Future domain data model drafted; no application code or migrations changed
+**Last Updated:** 2026-06-06 — Sprint 003 architecture documentation updated
+**Status:** SPRINT 003 DOCUMENTED — Architecture document reconciled with current codebase and future domain plan; no application code or migrations changed
 
 ## What Exists
 - GitHub repo: https://github.com/NaNo8831/Group-Meet
@@ -16,6 +16,17 @@
 - Dynamic meeting/status routes now await Next.js 16 `params`/`searchParams`
 - Supabase page-load errors now log and render clean user-facing error messages
 - Future domain data model draft at `docs/DATA_MODEL.md`
+- Architecture documentation updated at `docs/ARCHITECTURE.md` with Built / Partial / Planned labels and current Next.js dependency version
+
+## Sprint 003 Goal
+Review and update `docs/ARCHITECTURE.md` so it accurately reflects:
+- Current Sprint 001 implementation structure and legacy data model
+- Future domain workflow from `planning/DOMAIN.md`
+- Built, Partial, and Planned status for each major component
+- Actual dependency versions from `package.json`, including Next.js `^16.2.7`
+- Known gaps between the current codebase and the full domain specification
+
+No application code, migrations, or schema files were changed.
 
 ## Sprint 002 Goal
 Draft a planning-only future data model that supports the domain workflow in `planning/DOMAIN.md`:
