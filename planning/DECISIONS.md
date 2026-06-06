@@ -1,6 +1,6 @@
 # Decisions
 **Project:** Group Meet  
-**Last updated:** [INSERT DATE]
+**Last updated:** 6-6-2026
 
 Record of durable decisions future builders must respect. Do not re-litigate these without explicit operator approval.
 
