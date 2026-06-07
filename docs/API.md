@@ -7,9 +7,9 @@ Creates a new meeting request and notifies the team.
 **Request body:**
 ```json
 {
-  "participantName": "string",
-  "participantEmail": "string (valid email)",
-  "topic": "string",
+  "clientName": "string",
+  "clientEmail": "string (valid email)",
+  "meetingType": "in_depth | short_form",
   "slots": [
     {
       "startsAt": "ISO 8601 datetime string",
@@ -21,9 +21,14 @@ Creates a new meeting request and notifies the team.
 
 **Validation rules:**
 - All fields required
-- `participantEmail` must be valid email format
-- `slots` must have 1–5 items
+- `clientEmail` must be valid email format
+- `meetingType` must be `in_depth` or `short_form`
+- `slots` must have at least 1 item
 - Each slot: `endsAt` must be after `startsAt`
+
+**Insert behavior:**
+- Inserts `client_name`, `client_email`, and `meeting_type` on `meetings`
+- Does not insert into legacy `participant_name`, `participant_email`, or `topic`
 
 **Success response (200):**
 ```json

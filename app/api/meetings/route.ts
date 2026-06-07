@@ -26,20 +26,27 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceSupabaseClient();
-  const { participantName, participantEmail, topic, slots } = parsed.data;
+  const { clientName, clientEmail, meetingType, slots } = parsed.data;
   const appOrigin = getAppOrigin(request);
 
   const { data: meeting, error: meetingError } = await supabase
     .from("meetings")
     .insert({
-      participant_name: participantName,
-      participant_email: participantEmail,
-      topic
+      client_name: clientName,
+      client_email: clientEmail,
+      meeting_type: meetingType
     })
     .select("*")
     .single();
 
   if (meetingError || !meeting) {
+    if (meetingError?.code === "23502") {
+      return NextResponse.json(
+        { error: "Meeting request schema still requires legacy participant fields." },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ error: "Unable to create meeting." }, { status: 500 });
   }
 

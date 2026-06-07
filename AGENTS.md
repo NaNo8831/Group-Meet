@@ -112,6 +112,22 @@ After an Architect Pack is applied, do not implement directly from the pack file
 
 ---
 
+## Planning Document Updates
+
+At the end of each sprint, review each planning and architecture document and update it only if the sprint's work makes the current content inaccurate or incomplete. Do not rewrite documents wholesale; make surgical updates.
+
+| File | Update if... |
+|---|---|
+| `planning/STATE.md` | Always — update current sprint, status, recently completed, next actions, and any blockers |
+| `planning/DECISIONS.md` | A decision was made during the build that is not already recorded |
+| `planning/DOMAIN.md` | A domain rule was clarified or corrected during implementation |
+| `docs/DATA_MODEL.md` | A field name, type, or relationship changed during implementation |
+| `docs/ARCHITECTURE.md` | Any component status changed from Planned to Partial or Partial to Built; update the relevant component and directory tree entries |
+
+Do not update a file just to say the sprint happened. Only update where the content would be wrong or misleading without the change.
+
+---
+
 ## Completion Standard
 
 A sprint is complete only when:

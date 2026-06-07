@@ -3,6 +3,25 @@
 ## Approach
 Phase 1 uses manual end-to-end testing. No automated test suite is required for v1 launch. The acceptance criteria in `planning/sprints/001-discovery-architecture/acceptance.md` serve as the validation checklist.
 
+## Sprint 004 Validation Rules
+
+The public request form now validates the domain-aligned request shape:
+- `clientName` is required
+- `clientEmail` is required and must be a valid email address
+- `meetingType` is required and must be `in_depth` or `short_form`
+- `slots` must include at least one `{ startsAt, endsAt }` item
+- `endsAt` is derived from `startsAt + duration` by meeting type, not entered by the client
+- The old 5-slot cap has been removed; the date picker constrains selections to today through 28 days from today
+- The calendar is Sunday-first
+- Time options on the same date are disabled when they would overlap an existing slot plus a 15-minute buffer
+- `toApiSlots()` converts selected US/Eastern dates/times to ISO strings using `date-fns-tz`
+
+Sprint 004 local validation:
+- `npx tsc --noEmit` passed
+- `npm run build` passed
+- Console duration assertions passed for both Short-form 45-minute and In-depth 75-minute slot derivation
+- Live submit currently fails until legacy `meetings.participant_name`, `meetings.participant_email`, and `meetings.topic` are nullable or defaulted
+
 ## Builder Validation Run — 2026-06-05
 
 - `npm install` completed and generated `package-lock.json`.
@@ -35,7 +54,7 @@ Phase 1 uses manual end-to-end testing. No automated test suite is required for 
 
 ### Path 4: Invalid inputs
 1. Submit request form with missing fields — verify inline errors
-2. Submit request form with end time before start time — verify error
+2. Submit request form without a meeting type or proposed slot — verify inline errors and disabled submit behavior
 3. Load `/meetings/[invalid-uuid]` — verify "Meeting not found"
 4. Load voting page with unknown `member` param — verify graceful error
 
