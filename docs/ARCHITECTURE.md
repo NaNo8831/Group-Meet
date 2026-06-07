@@ -18,16 +18,21 @@ The current codebase is a Sprint 001 MVP that uses older Participant / Team Memb
 
 ### Public Request Form — **Built**
 
-**What it does:** Allows an external participant/client to submit a meeting request with contact details, a topic, and proposed time slots.
+**What it does:** Allows an external client to submit a meeting request with contact details, meeting type, and proposed time slots.
 
 **Current files:**
 - `app/page.tsx`
 - `lib/validation.ts`
 - `app/api/meetings/route.ts`
+- `src/components/DateTimePicker/index.tsx`
+- `src/components/DateTimePicker/DurationStep.tsx`
+- `src/components/DateTimePicker/MonthCalendar.tsx`
+- `src/components/DateTimePicker/TimeSlotEditor.tsx`
+- `src/components/DateTimePicker/types.ts`
 
-**Current behavior:** The form collects `participantName`, `participantEmail`, `topic`, and 1-5 explicit start/end time ranges. It validates with zod and posts to `POST /api/meetings`.
+**Current behavior:** The form collects `clientName`, `clientEmail`, `meetingType`, and proposed start times through a composed date/time picker. Meeting type controls duration, end time is derived client-side before API submission, the calendar is Sunday-first, and selectable dates are constrained to today through 28 days from today. Time slot options on the same date are blocked when they would overlap an existing slot plus a 15-minute buffer. The route validates with zod and posts ISO `startsAt` / `endsAt` slot ranges to `POST /api/meetings`.
 
-**Planned domain behavior:** The form should collect client name, client email, meeting type, and proposed start times. Duration is derived from meeting type, end time is not user-entered, and there is no slot-count cap within the 28-day horizon.
+**Remaining gaps:** Downstream status pages, voting pages, and email helpers still contain legacy Participant / Team Member assumptions and are intentionally deferred to future sprints.
 
 ### Magic Link System — **Planned**
 
@@ -123,7 +128,7 @@ The current codebase is a Sprint 001 MVP that uses older Participant / Team Memb
 - `app/api/responses/route.ts`
 
 **Current behavior:**
-- `POST /api/meetings` validates input, inserts a legacy `meetings` row, inserts `time_slots`, loads active `team_members`, and sends notification emails.
+- `POST /api/meetings` validates the Sprint 004 request shape, inserts `client_name`, `client_email`, and `meeting_type` into `meetings`, inserts `time_slots`, loads active legacy `team_members`, and sends notification emails.
 - `POST /api/responses` validates input, checks pending status, upserts legacy `responses`, runs quorum logic, updates confirmation fields, and sends confirmation emails.
 
 **Planned domain behavior:** Future routes will be needed for magic link validation, professional response editing, admin pairing approval, client confirmation/cancellation, admin roster management, Super Admin settings, email template management, and scheduled-job actions.
@@ -156,7 +161,7 @@ The full request lifecycle is planned around the 7-step workflow in `planning/DO
 
 ### 1. Client submits request
 
-**Current status: Partial.** The public form is built, but it uses legacy fields: participant name, participant email, topic, and user-entered start/end slot ranges with a five-slot cap.
+**Current status: Partial.** The public form now collects client name, client email, meeting type, and proposed start times with derived end times. The rest of the workflow still uses legacy Team Member quorum behavior.
 
 **Planned flow:** Client submits name, email, meeting type, and proposed start times. Duration is derived from meeting type: In-depth = 75 minutes, Short-form = 45 minutes. All times use the platform business timezone.
 
@@ -212,6 +217,7 @@ Actual installed dependencies from `package.json`:
 | `@hookform/resolvers` `^3.9.1` | Integrates zod validation with react-hook-form. |
 | `zod` `^3.23.8` | Runtime validation for form and API inputs. |
 | `date-fns` `^4.1.0` | Date formatting for slot display. |
+| `date-fns-tz` `^3.2.0` | Business-timezone conversion for public request form slot serialization. |
 | `lucide-react` `^0.468.0` | Icon components used in the UI. |
 | `clsx` `^2.1.1` | Conditional class-name helper. |
 | `tailwind-merge` `^2.5.5` | Merges Tailwind utility classes in `lib/utils.ts`. |
@@ -258,7 +264,14 @@ Current project structure, with planned areas marked where they do not exist yet
 │   ├── utils.ts                            # Built: Tailwind class merge helper
 │   └── validation.ts                       # Partial: legacy form/API schemas
 ├── src/
-│   └── README.md                           # Built: notes that source currently lives in app/lib
+│   ├── README.md                           # Built: notes that source previously lived in app/lib
+│   └── components/
+│       └── DateTimePicker/                 # Built: Sprint 004 public request date/time picker
+│           ├── index.tsx                   # Built: composed picker state and API slot output
+│           ├── DurationStep.tsx            # Built: meeting type selection
+│           ├── MonthCalendar.tsx           # Built: Sunday-first 28-day date picker
+│           ├── TimeSlotEditor.tsx          # Built: per-date 15-minute time selectors with conflict blocking
+│           └── types.ts                    # Built: shared picker types and slot conversion helpers
 ├── supabase/
 │   ├── schema.sql                          # Partial: legacy Sprint 001 schema
 │   └── seed.sql                            # Partial: legacy team member seed data
@@ -308,7 +321,7 @@ Durable architectural decisions live in `planning/DECISIONS.md` and should not b
 ## Known Gaps
 
 - Sprint 001 legacy tables exist and are not the future domain model: `team_members`, `meetings`, `time_slots`, and `responses`. Migration strategy is intentionally deferred and must not design around these tables as the long-term model.
-- Current public request form does not match the future domain form: it collects topic, user-entered end times, and at most five slots; it does not collect meeting type or derive duration.
+- Public request intake now uses the domain-aligned fields, but downstream pages and emails still use legacy Participant / Team Member assumptions.
 - Current system has no magic link storage, hashed tokens, validation, revocation, or purpose-specific client/professional links.
 - Current professional response flow is a legacy team voting page with a `member` query parameter, not a magic-link-gated professional flow.
 - Current response logic confirms automatically after one Leader and one Support share a slot; the domain requires 4+ professional responses, 3+ matched slots, admin review, and client final confirmation.

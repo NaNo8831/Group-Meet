@@ -1,34 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarPlus, Loader2, Minus, Plus } from "lucide-react";
+import { CalendarPlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { createMeetingSchema } from "@/lib/validation";
+import { DateTimePicker, type ApiSlot, type MeetingType } from "@/src/components/DateTimePicker";
 
-const localSlotSchema = z
-  .object({
-    startsAt: z.string().min(1, "Choose a start date and time."),
-    endsAt: z.string().min(1, "Choose an end date and time.")
-  })
-  .refine((slot) => new Date(slot.endsAt).getTime() > new Date(slot.startsAt).getTime(), {
-    message: "End time must be after start time.",
-    path: ["endsAt"]
-  });
-
-const formSchema = createMeetingSchema
-  .omit({ slots: true })
-  .extend({
-    slots: z.array(localSlotSchema).min(1, "Add at least one time.").max(5, "Add no more than five times.")
-  });
+const formSchema = createMeetingSchema;
 
 type RequestFormValues = z.infer<typeof formSchema>;
-
-function toIso(value: string) {
-  return new Date(value).toISOString();
-}
 
 export default function HomePage() {
   const router = useRouter();
@@ -36,17 +19,26 @@ export default function HomePage() {
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      participantName: "",
-      participantEmail: "",
-      topic: "",
-      slots: [{ startsAt: "", endsAt: "" }]
+      clientName: "",
+      clientEmail: "",
+      slots: []
     }
   });
-  const slots = useFieldArray({
-    control: form.control,
-    name: "slots"
-  });
   const isSubmitting = form.formState.isSubmitting;
+  const selectedMeetingType = form.watch("meetingType");
+  const selectedSlots = form.watch("slots");
+  const canSubmit = Boolean(selectedMeetingType) && selectedSlots.length > 0 && !isSubmitting;
+
+  const handleDateTimeChange = useCallback(
+    (slots: ApiSlot[], meetingType: MeetingType | null) => {
+      if (meetingType) {
+        form.setValue("meetingType", meetingType, { shouldDirty: true, shouldValidate: true });
+      }
+
+      form.setValue("slots", slots, { shouldDirty: true, shouldValidate: true });
+    },
+    [form]
+  );
 
   async function onSubmit(values: RequestFormValues) {
     setSubmitError(null);
@@ -56,13 +48,7 @@ export default function HomePage() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        ...values,
-        slots: values.slots.map((slot) => ({
-          startsAt: toIso(slot.startsAt),
-          endsAt: toIso(slot.endsAt)
-        }))
-      })
+      body: JSON.stringify(values)
     });
 
     const payload = (await response.json().catch(() => null)) as { meetingId?: string; error?: string } | null;
@@ -100,7 +86,7 @@ export default function HomePage() {
             </div>
             <div>
               <h2 className="text-xl font-semibold">Meeting request</h2>
-              <p className="text-sm text-muted-foreground">Add up to five proposed times.</p>
+              <p className="text-sm text-muted-foreground">Choose a meeting type and propose available times.</p>
             </div>
           </div>
 
@@ -109,9 +95,9 @@ export default function HomePage() {
               <span className="text-sm font-medium">Name</span>
               <input
                 className="rounded-md border px-3 py-2 outline-none transition focus:ring-2 focus:ring-ring"
-                {...form.register("participantName")}
+                {...form.register("clientName")}
               />
-              <FieldError message={form.formState.errors.participantName?.message} />
+              <FieldError message={form.formState.errors.clientName?.message} />
             </label>
 
             <label className="grid gap-2">
@@ -119,70 +105,15 @@ export default function HomePage() {
               <input
                 type="email"
                 className="rounded-md border px-3 py-2 outline-none transition focus:ring-2 focus:ring-ring"
-                {...form.register("participantEmail")}
+                {...form.register("clientEmail")}
               />
-              <FieldError message={form.formState.errors.participantEmail?.message} />
-            </label>
-
-            <label className="grid gap-2">
-              <span className="text-sm font-medium">Topic</span>
-              <textarea
-                rows={4}
-                className="resize-none rounded-md border px-3 py-2 outline-none transition focus:ring-2 focus:ring-ring"
-                {...form.register("topic")}
-              />
-              <FieldError message={form.formState.errors.topic?.message} />
+              <FieldError message={form.formState.errors.clientEmail?.message} />
             </label>
 
             <div className="grid gap-3">
-              <div className="flex items-center justify-between gap-4">
-                <h3 className="text-sm font-semibold">Proposed times</h3>
-                <button
-                  type="button"
-                  onClick={() => slots.append({ startsAt: "", endsAt: "" })}
-                  disabled={slots.fields.length >= 5}
-                  className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  Add another time
-                </button>
-              </div>
-
-              {slots.fields.map((field, index) => (
-                <div key={field.id} className="grid gap-3 rounded-md border bg-muted/35 p-3 sm:grid-cols-[1fr_1fr_auto]">
-                  <label className="grid gap-2">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Start</span>
-                    <input
-                      type="datetime-local"
-                      className="min-w-0 rounded-md border bg-white px-3 py-2 outline-none transition focus:ring-2 focus:ring-ring"
-                      {...form.register(`slots.${index}.startsAt`)}
-                    />
-                    <FieldError message={form.formState.errors.slots?.[index]?.startsAt?.message} />
-                  </label>
-
-                  <label className="grid gap-2">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">End</span>
-                    <input
-                      type="datetime-local"
-                      className="min-w-0 rounded-md border bg-white px-3 py-2 outline-none transition focus:ring-2 focus:ring-ring"
-                      {...form.register(`slots.${index}.endsAt`)}
-                    />
-                    <FieldError message={form.formState.errors.slots?.[index]?.endsAt?.message} />
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={() => slots.remove(index)}
-                    disabled={slots.fields.length === 1}
-                    aria-label="Remove time"
-                    title="Remove time"
-                    className="mt-6 inline-flex h-10 w-10 items-center justify-center rounded-md border bg-white transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Minus className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-              <FieldError message={form.formState.errors.slots?.root?.message} />
+              <DateTimePicker onChange={handleDateTimeChange} />
+              <FieldError message={form.formState.errors.meetingType?.message} />
+              <FieldError message={form.formState.errors.slots?.message} />
             </div>
           </div>
 
@@ -194,7 +125,7 @@ export default function HomePage() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={!canSubmit}
             className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}

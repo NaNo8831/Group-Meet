@@ -11,10 +11,12 @@ const slotSchema = z
   });
 
 export const createMeetingSchema = z.object({
-  participantName: z.string().trim().min(1, "Name is required."),
-  participantEmail: z.string().trim().email("Enter a valid email address."),
-  topic: z.string().trim().min(1, "Topic is required."),
-  slots: z.array(slotSchema).min(1, "Add at least one time.").max(5, "Add no more than five times.")
+  clientName: z.string().trim().min(1, "Name is required."),
+  clientEmail: z.string().trim().email("Enter a valid email address."),
+  meetingType: z.enum(["in_depth", "short_form"], {
+    required_error: "Choose a meeting type."
+  }),
+  slots: z.array(slotSchema).min(1, "Add at least one time.")
 });
 
 export const submitResponsesSchema = z.object({
