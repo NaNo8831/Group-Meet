@@ -1,0 +1,23 @@
+ALTER TABLE requests                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slots                       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE professionals               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE professional_responses      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE professional_response_slots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pairings                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pairing_slots               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admins                      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE magic_links                 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_templates             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_settings           ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "service role full access" ON requests                    FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON slots                       FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON professionals               FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON professional_responses      FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON professional_response_slots FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON pairings                    FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON pairing_slots               FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON admins                      FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON magic_links                 FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON email_templates             FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "service role full access" ON platform_settings           FOR ALL USING (auth.role() = 'service_role');
