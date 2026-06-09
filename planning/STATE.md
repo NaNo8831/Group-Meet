@@ -1,13 +1,18 @@
 # Group Meet — Project State
 
-**Last Updated:** 2026-06-07 — Sprint 004 bug-fix pass completed with database constraint blocker
-**Status:** SPRINT 004 PARTIAL — Calendar and time-slot conflict fixes are complete; submit failure is diagnosed as a live database legacy NOT NULL constraint that blocks compliant new-column-only inserts
+**Last Updated:** 2026-06-09 — Sprint 005 complete: Date/Time Picker UI Refinement + Professional Roster Management
+**Status:** SPRINT 005 COMPLETE — Part A (TimeSlotEditor inline chip layout, week grouping, ⋮ context menu) and Part B (professional roster page, API routes, CSV import) are built and passing `npm run build`. Live database still needs migration `supabase/migrations/005_professionals.sql` applied before API routes are functional end-to-end.
 
 ## What Exists
 - GitHub repo: https://github.com/NaNo8831/Group-Meet
 - Next.js 16.2.7 App Router application scaffold
 - Domain-aligned public request form at `/`
 - Participant status page at `/meetings/[id]`
+- Professional roster page at `/admin/professionals`
+- API routes: `GET/POST /api/admin/professionals`, `PATCH /api/admin/professionals/[id]`, `POST /api/admin/professionals/import`
+- `src/components/ProfessionalRoster/` components: index, ProfessionalTable, AddProfessionalForm, CsvImportForm, types
+- `supabase/migrations/005_professionals.sql` — creates `professional_tier` enum and `professionals` table (must be applied to live DB)
+- Refactored `TimeSlotEditor` with inline chip layout, week grouping, ⋮ context menu with "Apply to all [Day]" and Delete
 - Team voting page at `/team/meetings/[id]?member=[uuid]`
 - API routes: `POST /api/meetings`, `POST /api/responses`
 - Supabase schema and seed files under `supabase/`
@@ -20,6 +25,25 @@
 - Builder operating rules now include end-of-sprint planning document update criteria in `AGENTS.md`
 - Date/time picker components under `src/components/DateTimePicker/`
 - `date-fns-tz` dependency for US/Eastern slot serialization
+
+## Recently Completed
+
+### Sprint 005 — Date/Time Picker UI Refinement + Professional Roster Management
+
+Completed:
+- Part A: Refactored `TimeSlotEditor` to inline chip layout (date chip "Jun 16", time selector, ⋮ menu)
+- ⋮ menu has "Apply to all [Day]s" (hidden unless 2+ selected dates share same day of week) and Delete
+- Week-level grouping with `border-t border-gray-200` dividers between ISO week groups
+- End time remains hidden; conflict-blocking logic preserved
+- Part B: `GET/POST /api/admin/professionals`, `PATCH /api/admin/professionals/[id]`, `POST /api/admin/professionals/import`
+- All Part B routes marked TODO for Sprint 006 auth
+- ProfessionalRoster component suite with inline tier/status toggles, AddProfessionalForm, CsvImportForm
+- `/admin/professionals` page
+- Migration `supabase/migrations/005_professionals.sql` — operator must apply to live DB
+
+Validation:
+- `npx tsc --noEmit` — pre-existing ES5 deprecation warning only (not new)
+- `./node_modules/.bin/next build` passed with all 10 routes listed
 
 ## Current Blocker
 
@@ -91,6 +115,7 @@ Completed. `AGENTS.md` now includes explicit end-of-sprint planning document upd
 
 ## Next Actions
 
+- Apply `supabase/migrations/005_professionals.sql` to the live Supabase database to enable the professionals API routes
 - Relax or default legacy `meetings.participant_name`, `meetings.participant_email`, and `meetings.topic` constraints in the live Supabase database
 - Plan a follow-up sprint for legacy ripple effects in status pages, voting pages, and email helpers
 - Validate a live request submission against Supabase and Resend credentials

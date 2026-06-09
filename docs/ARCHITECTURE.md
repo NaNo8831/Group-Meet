@@ -57,13 +57,25 @@ The current codebase is a Sprint 001 MVP that uses older Participant / Team Memb
 
 **Planned domain behavior:** Professionals access the page through magic links, indicate role preference (Lead / Support / Either), can edit responses until admin locks a pairing, and see clear editable-until-locked messaging. There is no explicit decline flow; leaving all slots blank means no response.
 
-### Admin Dashboard — **Planned**
+### Admin Dashboard — **Partial**
 
 **What it does:** Gives admins a login-protected workspace for active request review, professional roster management, threshold/flag monitoring, pairing approval, and manual re-notification.
 
-**Current files or directories:** None.
+**Current files:**
+- `app/admin/professionals/page.tsx`
+- `src/components/ProfessionalRoster/index.tsx`
+- `src/components/ProfessionalRoster/ProfessionalTable.tsx`
+- `src/components/ProfessionalRoster/AddProfessionalForm.tsx`
+- `src/components/ProfessionalRoster/CsvImportForm.tsx`
+- `src/components/ProfessionalRoster/types.ts`
+- `app/api/admin/professionals/route.ts`
+- `app/api/admin/professionals/[id]/route.ts`
+- `app/api/admin/professionals/import/route.ts`
+- `supabase/migrations/005_professionals.sql`
 
-**Planned behavior:** The dashboard should show active requests only, display client details, meeting type, professional responses, matched slots, and request status. Admins select the final Lead and Support, enter the meeting location, and approve the pairing.
+**Current behavior:** Professional roster page at `/admin/professionals` renders a table of all professionals with inline tier and status toggles, an add-professional form, and a CSV import form. API routes support GET (list), POST (create), PATCH (update tier/is_active), and CSV import with duplicate skipping. All admin routes are marked TODO for Sprint 006 auth. Soft-delete only via `is_active = false`.
+
+**Planned behavior:** Login-protected dashboard, active request monitoring, threshold/flag view, admin pairing approval, manual re-notification. Admin auth is Sprint 006.
 
 ### Super Admin Settings — **Planned**
 
@@ -266,12 +278,18 @@ Current project structure, with planned areas marked where they do not exist yet
 ├── src/
 │   ├── README.md                           # Built: notes that source previously lived in app/lib
 │   └── components/
-│       └── DateTimePicker/                 # Built: Sprint 004 public request date/time picker
-│           ├── index.tsx                   # Built: composed picker state and API slot output
-│           ├── DurationStep.tsx            # Built: meeting type selection
-│           ├── MonthCalendar.tsx           # Built: Sunday-first 28-day date picker
-│           ├── TimeSlotEditor.tsx          # Built: per-date 15-minute time selectors with conflict blocking
-│           └── types.ts                    # Built: shared picker types and slot conversion helpers
+│       ├── DateTimePicker/                 # Built: Sprint 004/005 public request date/time picker
+│       │   ├── index.tsx                   # Built: composed picker state and API slot output
+│       │   ├── DurationStep.tsx            # Built: meeting type selection
+│       │   ├── MonthCalendar.tsx           # Built: Sunday-first 28-day date picker
+│       │   ├── TimeSlotEditor.tsx          # Built: inline chip layout, week groups, ⋮ menu, conflict blocking
+│       │   └── types.ts                    # Built: shared picker types and slot conversion helpers
+│       └── ProfessionalRoster/             # Built: Sprint 005 admin professional roster UI
+│           ├── index.tsx                   # Built: roster container with fetch/refresh
+│           ├── ProfessionalTable.tsx       # Built: table with inline tier/status toggles
+│           ├── AddProfessionalForm.tsx     # Built: single-professional add form
+│           ├── CsvImportForm.tsx           # Built: CSV file import with result summary
+│           └── types.ts                    # Built: Professional interface and tier types
 ├── supabase/
 │   ├── schema.sql                          # Partial: legacy Sprint 001 schema
 │   └── seed.sql                            # Partial: legacy team member seed data
@@ -289,10 +307,10 @@ Current project structure, with planned areas marked where they do not exist yet
 └── tests/                                  # Test/validation fixtures
 
 Planned directories/routes not present yet:
-├── app/admin/                              # Planned: admin dashboard and settings
+├── app/admin/                              # Partial: roster page built; request monitoring, pairing, settings planned
 ├── app/professional/ or app/respond/       # Planned: magic-link professional response flow
 ├── app/client/ or app/requests/            # Planned: client confirmation/editing flow
-├── app/api/admin/                          # Planned: admin-only APIs
+├── app/api/admin/                          # Partial: professionals routes built; others planned
 ├── app/api/magic-links/                    # Planned: token generation/validation APIs
 ├── app/api/jobs/                           # Planned: scheduled-job endpoints
 └── supabase/migrations/                    # Planned: future domain migrations
