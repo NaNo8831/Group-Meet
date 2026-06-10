@@ -1,7 +1,6 @@
-// TODO: secure with admin auth (Sprint 006)
-
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import { getAuthenticatedAdminFromRequest } from "@/lib/auth";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -27,6 +26,11 @@ function parseCsv(text: string): { name: string; email: string }[] {
 }
 
 export async function POST(request: NextRequest) {
+  const admin = await getAuthenticatedAdminFromRequest(request);
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let file: File | null = null;
   try {
     const formData = await request.formData();
@@ -51,7 +55,6 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServiceSupabaseClient();
 
-  // Fetch existing emails to detect duplicates
   const { data: existingRows } = await supabase
     .from("professionals")
     .select("email");

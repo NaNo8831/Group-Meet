@@ -186,7 +186,8 @@ Group Meet's future data model is centered on a client-submitted `requests` reco
 
 | Field | Type | Nullable | Notes |
 |---|---|---:|---|
-| `id` | uuid | No | Primary key; may align with the auth provider user ID. |
+| `id` | uuid | No | Primary key; independent UUID, not the auth provider user ID. |
+| `auth_user_id` | uuid | Yes | References `auth.users(id)`; set on first login, backfilled from email match for bootstrapped accounts. |
 | `email` | text | No | Unique admin email address. |
 | `name` | text | Yes | Admin display name. |
 | `role` | admin_role | No | Either `admin` or `super_admin`. |
@@ -209,6 +210,7 @@ Group Meet's future data model is centered on a client-submitted `requests` reco
 - Admins are invite-only.
 - Super Admin is required for admin account management, email template editing, and platform settings.
 - Public client and professional access does not use this table.
+- `auth_user_id` is populated on first login via email-match backfill; pre-fill is recommended when creating admin records manually (see `docs/ADMIN_SETUP.md`).
 
 ### `magic_links`
 

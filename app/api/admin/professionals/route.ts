@@ -1,8 +1,7 @@
-// TODO: secure with admin auth (Sprint 006)
-
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import { getAuthenticatedAdminFromRequest } from "@/lib/auth";
 
 const createSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -10,7 +9,12 @@ const createSchema = z.object({
   tier: z.enum(["in_depth", "general"]).optional().default("general")
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const admin = await getAuthenticatedAdminFromRequest(request);
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const supabase = createServiceSupabaseClient();
 
   const { data, error } = await supabase
@@ -26,6 +30,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const admin = await getAuthenticatedAdminFromRequest(request);
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
