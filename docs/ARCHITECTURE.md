@@ -159,13 +159,25 @@ The current codebase is a Sprint 001 MVP that uses older Participant / Team Memb
 
 **Planned domain behavior:** `docs/DATA_MODEL.md` defines the future domain model: `requests`, `slots`, `professionals`, `professional_responses`, `pairings`, `admins`, `magic_links`, `email_templates`, and `platform_settings`. Migration strategy from the Sprint 001 legacy tables is intentionally deferred.
 
-### Authentication (Admin Login) — **Planned**
+### Authentication (Admin Login) — **Built**
 
-**What it does:** Protects admin and Super Admin routes.
+**What it does:** Protects all `/admin/*` and `/api/admin/*` routes with Supabase Auth session validation and per-request `admins` table role lookup.
 
-**Current files or directories:** None. No middleware or admin auth provider is implemented.
+**Current files:**
+- `proxy.ts` — Next.js 16 proxy (previously middleware); protects `/admin/*` and `/api/admin/*`
+- `lib/supabase-server.ts` — SSR server-side Supabase auth client (cookie-based)
+- `lib/supabase-client.ts` — SSR browser Supabase auth client
+- `lib/auth.ts` — `getAuthenticatedAdmin()`, `getAuthenticatedAdminFromRequest()`, `isSuperAdmin()` helpers
+- `app/admin/login/page.tsx` — email + password login form
+- `app/admin/(protected)/layout.tsx` — Server Component layout showing admin email and sign-out
+- `app/admin/(protected)/AdminNav.tsx` — Client Component sign-out button
+- `app/api/admin/me/route.ts` — admin identity/role verification endpoint
+- `supabase/migrations/006_admin_auth.sql` — `auth_user_id` column, unique index, RLS policies
+- `docs/ADMIN_SETUP.md` — first Super Admin bootstrap instructions
 
-**Planned behavior:** Admins are invite-only and login-backed. Super Admin is a distinct role with elevated permission checks for admin management, email templates, and platform settings. Clients and professionals should not have accounts.
+**Current behavior:** Unauthenticated `/admin/*` requests redirect to `/admin/login`. Unauthenticated `/api/admin/*` requests return 401. On login, the admin's Supabase Auth session is established and their `admins` table record is verified (active status, role). Role is always read fresh from the `admins` table; JWT role is not trusted. Admin layout shows the logged-in email and a sign-out button. Sign-out clears the session and redirects to `/admin/login`.
+
+**Planned behavior:** Super Admin invite flow (Sprint 014), Super Admin settings page (Sprint 014).
 
 ## Data Flow
 
@@ -267,11 +279,14 @@ Current project structure, with planned areas marked where they do not exist yet
 │   ├── globals.css                         # Built: global Tailwind styles
 │   ├── layout.tsx                          # Built: root layout and metadata
 │   └── page.tsx                            # Built: public request form
-├── lib/                                    # Built: shared Sprint 001 modules
+├── lib/                                    # Built: shared modules
+│   ├── auth.ts                             # Built: admin auth helpers (getAuthenticatedAdmin, isSuperAdmin)
 │   ├── email.ts                            # Partial: Resend helpers, hardcoded templates
 │   ├── format.ts                           # Built: slot/name formatting helpers
 │   ├── quorum.ts                           # Partial: legacy quorum check
-│   ├── supabase.ts                         # Built: Supabase client factories
+│   ├── supabase.ts                         # Built: service-role and public Supabase client factories
+│   ├── supabase-client.ts                  # Built: SSR browser Supabase auth client
+│   ├── supabase-server.ts                  # Built: SSR server-side Supabase auth client
 │   ├── types.ts                            # Partial: legacy table TypeScript types
 │   ├── utils.ts                            # Built: Tailwind class merge helper
 │   └── validation.ts                       # Partial: legacy form/API schemas
@@ -306,8 +321,10 @@ Current project structure, with planned areas marked where they do not exist yet
 ├── templates/                              # Reusable templates
 └── tests/                                  # Test/validation fixtures
 
+├── proxy.ts                                # Built: Next.js 16 proxy protecting /admin/* and /api/admin/*
+
 Planned directories/routes not present yet:
-├── app/admin/                              # Partial: roster page built; request monitoring, pairing, settings planned
+├── app/admin/                              # Partial: login + roster built; request monitoring, pairing, settings planned
 ├── app/professional/ or app/respond/       # Planned: magic-link professional response flow
 ├── app/client/ or app/requests/            # Planned: client confirmation/editing flow
 ├── app/api/admin/                          # Partial: professionals routes built; others planned
@@ -323,7 +340,7 @@ Planned directories/routes not present yet:
 | Supabase | **Integrated** | Managed Postgres data store with RLS. Current schema is Sprint 001 legacy; future schema is documented in `docs/DATA_MODEL.md`. |
 | Resend | **Integrated** | Transactional email delivery. Current content is hardcoded in `lib/email.ts`; future content should use database templates. |
 | Vercel | **Planned/TBD** | Hosting target named in project docs; external project/environment setup remains pending in `planning/STATE.md`. |
-| Admin auth provider | **Planned/TBD** | Needed for invite-only Admin and Super Admin login. No provider or middleware is currently implemented. |
+| Supabase Auth (`@supabase/ssr`) | **Integrated** | Invite-only Admin and Super Admin login via email + password. Session managed with cookie-based SSR client. Role verified against `admins` table on every request. |
 
 ## Architecture Decisions
 

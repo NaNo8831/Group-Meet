@@ -1,13 +1,20 @@
 # Group Meet — Project State
 
-**Last Updated:** 2026-06-09 — Sprint 005 complete: Date/Time Picker UI Refinement + Professional Roster Management
-**Status:** SPRINT 005 COMPLETE — Part A (TimeSlotEditor inline chip layout, week grouping, ⋮ context menu) and Part B (professional roster page, API routes, CSV import) are built and passing `npm run build`. Live database still needs migration `supabase/migrations/005_professionals.sql` applied before API routes are functional end-to-end.
+**Last Updated:** 2026-06-10 — Sprint 006 complete: Admin Authentication
+**Status:** SPRINT 006 COMPLETE — Supabase Auth (`@supabase/ssr`) integrated, proxy protection on all `/admin/*` and `/api/admin/*` routes, login page, admin layout with sign-out, role sync against `admins` table, auth helpers in `lib/auth.ts`, all Sprint 005 TODO auth comments replaced. `npm run build` passes. Live database needs migrations `005_professionals.sql` and `006_admin_auth.sql` applied before end-to-end use.
 
 ## What Exists
 - GitHub repo: https://github.com/NaNo8831/Group-Meet
 - Next.js 16.2.7 App Router application scaffold
 - Domain-aligned public request form at `/`
 - Participant status page at `/meetings/[id]`
+- Admin login page at `/admin/login` (email + password, Supabase Auth)
+- Admin layout with email display and Sign out button (`app/admin/(protected)/layout.tsx`)
+- `proxy.ts` protecting all `/admin/*` and `/api/admin/*` routes
+- Auth helpers: `lib/supabase-server.ts`, `lib/supabase-client.ts`, `lib/auth.ts`
+- `/api/admin/me` endpoint for admin identity/role verification
+- `supabase/migrations/006_admin_auth.sql` — adds `auth_user_id` to `admins` table with RLS policies
+- `docs/ADMIN_SETUP.md` — first Super Admin bootstrap instructions
 - Professional roster page at `/admin/professionals`
 - API routes: `GET/POST /api/admin/professionals`, `PATCH /api/admin/professionals/[id]`, `POST /api/admin/professionals/import`
 - `src/components/ProfessionalRoster/` components: index, ProfessionalTable, AddProfessionalForm, CsvImportForm, types
@@ -27,6 +34,30 @@
 - `date-fns-tz` dependency for US/Eastern slot serialization
 
 ## Recently Completed
+
+### Sprint 006 — Admin Authentication
+
+Completed:
+- `@supabase/ssr` installed; `lib/supabase-server.ts` and `lib/supabase-client.ts` created
+- `proxy.ts` (Next.js 16 proxy file, replaces middleware.ts) protects `/admin/*` and `/api/admin/*`
+- Unauthenticated `/admin/*` requests redirect to `/admin/login`; unauthenticated `/api/admin/*` requests return 401
+- `app/admin/login/page.tsx` — clean email/password login form with inline error display
+- `app/admin/(protected)/layout.tsx` — Server Component layout with email display and Sign out
+- `app/admin/(protected)/AdminNav.tsx` — Client Component sign-out button
+- `lib/auth.ts` — `getAuthenticatedAdmin()`, `getAuthenticatedAdminFromRequest()`, `isSuperAdmin()` helpers
+- Role read fresh from `admins` table on every request; JWT role not trusted
+- Admin role sync: matches by `auth_user_id`, falls back to email for bootstrap; backfills `auth_user_id` on first match
+- Deactivated admins (`is_active = false`) denied with 403
+- `/api/admin/me` endpoint for post-login admin verification
+- All Sprint 005 TODO auth comments replaced with real auth checks in all three admin API routes
+- `supabase/migrations/006_admin_auth.sql` — adds `auth_user_id uuid` to `admins`, unique index, RLS policies
+- `docs/ADMIN_SETUP.md` — first Super Admin bootstrap instructions
+
+Validation:
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run build` — passed, 12 routes listed, no warnings
+
+Note: Next.js 16 renamed `middleware.ts` → `proxy.ts` with export renamed from `middleware` to `proxy`.
 
 ### Sprint 005 — Date/Time Picker UI Refinement + Professional Roster Management
 
@@ -115,7 +146,9 @@ Completed. `AGENTS.md` now includes explicit end-of-sprint planning document upd
 
 ## Next Actions
 
-- Apply `supabase/migrations/005_professionals.sql` to the live Supabase database to enable the professionals API routes
+- Apply `supabase/migrations/005_professionals.sql` to the live Supabase database (prerequisite)
+- Apply `supabase/migrations/006_admin_auth.sql` to the live Supabase database to enable admin auth
+- Follow `docs/ADMIN_SETUP.md` to create the first Super Admin account in the Supabase Auth dashboard and insert the `admins` row
 - Relax or default legacy `meetings.participant_name`, `meetings.participant_email`, and `meetings.topic` constraints in the live Supabase database
 - Plan a follow-up sprint for legacy ripple effects in status pages, voting pages, and email helpers
 - Validate a live request submission against Supabase and Resend credentials

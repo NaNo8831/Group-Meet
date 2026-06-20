@@ -1,8 +1,7 @@
-// TODO: secure with admin auth (Sprint 006)
-
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import { getAuthenticatedAdminFromRequest } from "@/lib/auth";
 
 const updateSchema = z
   .object({
@@ -17,6 +16,11 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const admin = await getAuthenticatedAdminFromRequest(request);
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   let body: unknown;
