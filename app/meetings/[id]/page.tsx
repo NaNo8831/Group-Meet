@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { firstName, formatSlot } from "@/lib/format";
+import { clientName, firstName, formatSlot, meetingTitle } from "@/lib/format";
 import { createPublicSupabaseClient } from "@/lib/supabase";
 import type { Meeting, TeamMember, TimeSlot } from "@/lib/types";
 
@@ -62,7 +62,7 @@ export default async function MeetingStatusPage({ params }: MeetingPageProps) {
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-primary">Group Meet</p>
-            <h1 className="mt-2 text-3xl font-semibold">{meeting.topic}</h1>
+            <h1 className="mt-2 text-3xl font-semibold">{meetingTitle(meeting as Meeting)}</h1>
           </div>
           <span className="rounded-md bg-accent px-3 py-1 text-sm font-medium capitalize text-accent-foreground">
             {status}
@@ -71,8 +71,8 @@ export default async function MeetingStatusPage({ params }: MeetingPageProps) {
 
         <dl className="grid gap-4 border-y py-5">
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">Participant</dt>
-            <dd className="mt-1 text-lg">{meeting.participant_name}</dd>
+            <dt className="text-sm font-medium text-muted-foreground">Requested by</dt>
+            <dd className="mt-1 text-lg">{clientName(meeting as Meeting)}</dd>
           </div>
         </dl>
 

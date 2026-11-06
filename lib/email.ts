@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { formatSlot } from "./format";
+import { clientEmail, clientName, formatSlot, meetingTitle } from "./format";
 import type { Meeting, TeamMember, TimeSlot } from "./types";
 
 const fromAddress = "Group Meet <onboarding@resend.dev>";
@@ -47,10 +47,10 @@ export async function sendTeamNotificationEmail(input: {
 
   await sendEmail({
     to: input.member.email,
-    subject: `New meeting request from ${input.meeting.participant_name}`,
-    text: `${input.meeting.participant_name} has requested a meeting.
+    subject: `New meeting request from ${clientName(input.meeting)}`,
+    text: `${clientName(input.meeting)} has requested a meeting.
 
-Topic: ${input.meeting.topic}
+Meeting type: ${meetingTitle(input.meeting)}
 
 Proposed times:
 ${slotList}
@@ -66,8 +66,15 @@ export async function sendParticipantConfirmationEmail(input: {
   leader: TeamMember;
   support: TeamMember;
 }) {
+  const to = clientEmail(input.meeting);
+
+  if (!to) {
+    console.error("Meeting has no client email. Confirmation email was not sent.", input.meeting.id);
+    return;
+  }
+
   await sendEmail({
-    to: input.meeting.participant_email,
+    to,
     subject: `Your meeting is confirmed - ${formatSlot(input.slot)}`,
     text: `Your meeting has been confirmed.
 
@@ -84,9 +91,9 @@ export async function sendTeamConfirmationEmail(input: {
 }) {
   await sendEmail({
     to: [input.leader.email, input.support.email],
-    subject: `Meeting confirmed with ${input.meeting.participant_name} - ${formatSlot(input.slot)}`,
-    text: `Participant: ${input.meeting.participant_name} (${input.meeting.participant_email})
-Topic: ${input.meeting.topic}
+    subject: `Meeting confirmed with ${clientName(input.meeting)} - ${formatSlot(input.slot)}`,
+    text: `Client: ${clientName(input.meeting)} (${clientEmail(input.meeting) ?? "no email on file"})
+Meeting type: ${meetingTitle(input.meeting)}
 Date & Time: ${formatSlot(input.slot)}`
   });
 }

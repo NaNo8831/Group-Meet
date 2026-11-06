@@ -35,6 +35,17 @@
 
 ## Recently Completed
 
+### Sprint 006 Follow-up — Legacy Field Ripple Fixes
+
+Completed:
+- `lib/types.ts` `Meeting` now carries `client_name`, `client_email`, `meeting_type`; legacy `participant_*`/`topic` are optional
+- `lib/format.ts` adds `clientName`, `clientEmail`, `meetingTitle` helpers (fall back to legacy fields on pre-Sprint 004 rows)
+- Participant status page, team voting page, and all three email helpers now use the new fields
+- Participant confirmation email is skipped with a logged error if no client email exists
+- Migration `007_relax_legacy_meeting_columns.sql` applied by the operator to the live DB
+
+Validation: `npx tsc --noEmit` clean; `npm run build` passed (12 routes). Not yet validated against live Supabase/Resend.
+
 ### Sprint 006 — Admin Authentication
 
 Completed:
@@ -149,8 +160,7 @@ Completed. `AGENTS.md` now includes explicit end-of-sprint planning document upd
 - Apply `supabase/migrations/005_professionals.sql` to the live Supabase database (prerequisite)
 - Apply `supabase/migrations/006_admin_auth.sql` to the live Supabase database to enable admin auth
 - Follow `docs/ADMIN_SETUP.md` to create the first Super Admin account in the Supabase Auth dashboard and insert the `admins` row
-- Apply `supabase/migrations/007_relax_legacy_meeting_columns.sql` to the live Supabase database (drops NOT NULL on `meetings.participant_name`, `participant_email`, `topic`; fixes the `POST /api/meetings` 23502 blocker; written but not yet applied)
-- Plan a follow-up sprint for legacy ripple effects in status pages, voting pages, and email helpers
+- Apply `supabase/migrations/007_relax_legacy_meeting_columns.sql` to the live Supabase database (applied by operator; drops NOT NULL on legacy columns)
 - Validate a live request submission against Supabase and Resend credentials
 - Continue future domain workflow sprints for professional response, admin pairing, and client confirmation
 

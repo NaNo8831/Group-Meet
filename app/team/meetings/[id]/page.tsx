@@ -1,4 +1,4 @@
-import { formatSlot } from "@/lib/format";
+import { clientName, formatSlot, meetingTitle } from "@/lib/format";
 import { createPublicSupabaseClient } from "@/lib/supabase";
 import type { Meeting, TeamMember, TimeSlot } from "@/lib/types";
 import { TeamVotingForm } from "./TeamVotingForm";
@@ -83,11 +83,11 @@ export default async function TeamMeetingPage({ params, searchParams }: TeamMeet
       <section className="mx-auto max-w-2xl rounded-lg border bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-6">
           <p className="text-sm font-medium uppercase tracking-wide text-primary">Group Meet</p>
-          <h1 className="mt-2 text-3xl font-semibold">{typedMeeting.topic}</h1>
+          <h1 className="mt-2 text-3xl font-semibold">{meetingTitle(typedMeeting)}</h1>
           <p className="mt-3 text-muted-foreground">
             {typedMember.name} · <span className="capitalize">{typedMember.role}</span>
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">Participant: {typedMeeting.participant_name}</p>
+          <p className="mt-1 text-sm text-muted-foreground">Client: {clientName(typedMeeting)}</p>
         </div>
 
         {typedMeeting.status === "confirmed" ? (
