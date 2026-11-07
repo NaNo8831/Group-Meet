@@ -22,4 +22,6 @@ pnpm-debug.log*
 # system
 .DS_Store
 Thumbs.db
-planning/architect-packs/
+# Architect Packs: track the Markdown packs, ignore anything else (installers, binaries)
+planning/architect-packs/*
+!planning/architect-packs/*.md
