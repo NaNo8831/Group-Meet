@@ -1,7 +1,28 @@
 #!/usr/bin/env node
+// Dual-parse file: this script must load under BOTH the CommonJS and the ES-module
+// parser, because the customer project's own package.json "type" field decides how
+// Node parses every .js file in the folder. Keep these rules or the script breaks
+// in half the folders out there:
+//   - no import.meta, no static import/export statements, no top-level await;
+//   - CommonJS-only globals (require, module, and the directory/filename globals)
+//     may be referenced only behind, or after, a `typeof` guard;
+//   - builtins load once: synchronously under CommonJS, via dynamic import() in
+//     loadBuiltins() under ES-module scope. Function bodies use them unchanged.
 
-const fs = require("fs");
-const path = require("path");
+let fs;
+let path;
+
+if (typeof require !== "undefined") {
+  fs = require("fs");
+  path = require("path");
+}
+
+async function loadBuiltins() {
+  if (!fs) {
+    fs = (await import("node:fs")).default;
+    path = (await import("node:path")).default;
+  }
+}
 
 const DELIMITER = "============================================================";
 const PROTECTED_FILES = new Set([
@@ -87,6 +108,34 @@ function parseArchitectPack(content) {
   return sections;
 }
 
+// Sprint 136: the distinct first path segments under planning/sprints/ for every
+// section that writes INSIDE a sprint folder (the path must continue below the
+// segment; a bare file directly under planning/sprints/ creates no folder). A
+// segment that does not match /^\d+-.+$/ is an offender. That regex deliberately
+// mirrors the dashboard's SPRINT_DIR_RE in
+// apps/hosted/lib/cockpit/sprint-chain.js (/^(\d+)-(.+)$/): the warning fires on
+// dashboard-invisibility, not on doctrine style, so "12-short" stays silent even
+// though the doctrine writes ###. Warn-only: exit codes and writes never change.
+function collectDashboardInvisibleSprintFolders(sections) {
+  const offenders = [];
+  const seen = new Set();
+  for (const section of sections) {
+    const match = /^planning\/sprints\/([^/]+)\//.exec(section.filePath);
+    if (!match) {
+      continue;
+    }
+    const segment = match[1];
+    if (seen.has(segment)) {
+      continue;
+    }
+    seen.add(segment);
+    if (!/^\d+-.+$/.test(segment)) {
+      offenders.push(segment);
+    }
+  }
+  return offenders;
+}
+
 function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
@@ -102,7 +151,7 @@ function main() {
     fail(`Architect Pack not found: ${packArgs[0]}`);
   }
 
-  const projectRoot = path.resolve(__dirname, "..");
+  const projectRoot = path.resolve(path.dirname(process.argv[1]), "..");
   const packContent = fs.readFileSync(packPath, "utf8");
   const sections = parseArchitectPack(packContent);
 
@@ -144,6 +193,17 @@ function main() {
     const verb = dryRun ? `would be ${result.action}` : result.action;
     console.log(`- ${verb}: ${result.filePath}`);
   }
+
+  for (const folder of collectDashboardInvisibleSprintFolders(sections)) {
+    console.error(
+      `Warning: sprint folder "${folder}" does not match the ###-name format; the Mission Control dashboard will not show it.`
+    );
+  }
 }
 
-main();
+loadBuiltins()
+  .then(() => main())
+  .catch((err) => {
+    console.error(err && err.stack ? err.stack : String(err));
+    process.exit(1);
+  });
