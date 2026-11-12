@@ -178,11 +178,15 @@ create policy meeting_type_pool_roles_service_role_all on meeting_type_pool_role
 -- 10. professionals: remove the policy that allowed every role (Sprint 005), keep server-only access
 alter table professionals enable row level security;
 drop policy if exists "service all" on professionals;
+-- "service role full access" (Phase 1 SQL) is tied to the public role and only restricted by a
+-- condition. The server-only policy below replaces it, so no policy on professionals applies to
+-- anon, authenticated, or public any more (Sprint 008 acceptance criterion 7). The app uses the
+-- service role key, which bypasses row level security, so this does not affect the app.
+drop policy if exists "service role full access" on professionals;
 drop policy if exists professionals_service_role_all on professionals;
 create policy professionals_service_role_all on professionals
   for all to service_role using (true) with check (true);
--- Other pre-existing policies on professionals (for example "service role full access", which is
--- already limited to the service role) are left in place. The post-check lists every remaining
--- policy and flags any that applies to anon, authenticated, or public.
+-- The post-check lists every remaining policy on professionals and flags any not limited to
+-- the service_role role.
 
 commit;
