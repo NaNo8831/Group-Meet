@@ -75,9 +75,28 @@ As of Sprint 007, `planning/ROADMAP.md` defines the road (Sprints 007 to 015). T
 - `app/api/admin/professionals/import/route.ts`
 - `supabase/migrations/005_professionals.sql`
 
-**Current behavior:** Professional roster page at `/admin/professionals` renders a table of all professionals with inline tier and status toggles, an add-professional form, and a CSV import form. API routes support GET (list), POST (create), PATCH (update tier/is_active), and CSV import with duplicate skipping. All admin routes are marked TODO for Sprint 006 auth. Soft-delete only via `is_active = false`.
+**Current behavior:** Professional roster page at `/admin/professionals` renders a table of all professionals with an Active or Inactive toggle, an add-professional form (name and email), and a CSV import form (name and email). API routes support GET (list), POST (create), PATCH (`is_active`), and CSV import with duplicate skipping. Tier is no longer shown or written (Decision 058). All admin routes require a signed-in active admin (Sprint 006). Soft-delete only via `is_active = false`. The admin header links to Meeting types and Professionals.
 
 **Planned behavior:** Login-protected dashboard, active request monitoring, threshold/flag view, admin pairing approval, manual re-notification. Admin auth is Sprint 006.
+
+### Meeting Types Workspace — **Built** (Sprint 008)
+
+**What it does:** Lets any active Admin or Super Admin create meeting types with a title, landing text, a shareable link, named durations, roles with required counts, readiness settings, and a pool of professionals with the roles each can fill.
+
+**Current files:**
+- `lib/meeting-types.ts` (types, validation schemas, `slugify`, readiness helper, database error mapping)
+- `app/api/admin/meeting-types/route.ts`
+- `app/api/admin/meeting-types/[id]/route.ts`
+- `app/api/admin/meeting-types/[id]/durations/route.ts` and `[durationId]/route.ts`
+- `app/api/admin/meeting-types/[id]/roles/route.ts` and `[roleId]/route.ts`
+- `app/api/admin/meeting-types/[id]/pool/[professionalId]/route.ts`
+- `app/admin/(protected)/meeting-types/page.tsx`, `new/page.tsx`, `[id]/page.tsx`
+- `src/components/MeetingTypes/` (`MeetingTypeList`, `NewMeetingTypeForm`, `MeetingTypeEditor`, `DurationsEditor`, `RolesEditor`, `PoolEditor`, `types`)
+- `supabase/migrations/008_meeting_types.sql`, with `supabase/preflight/008_preflight.sql`, `008_postcheck.sql`, and `supabase/rollbacks/008_meeting_types_rollback.sql`
+
+**Current behavior:** New meeting types start inactive. Turning one on needs at least one duration and one role; a role with too few pool members shows a warning only. The two original types (`in-depth` 75 min, `short-form` 45 min, Lead x1 and Support x1) were seeded inactive. Tables used: `meeting_types`, `meeting_type_durations`, `meeting_type_roles`, `meeting_type_pool`, `meeting_type_pool_roles`, and `professionals` (read). All five new tables and `professionals` are server-only through row level security.
+
+**Not built yet:** the public link `/meet/<slug>` and client request on these tables (Sprint 009); sending email or notifying the pool (Sprints 010 and 011); threshold evaluation (Sprint 012). The editor shows the planned link as text.
 
 ### Super Admin Settings — **Planned**
 
@@ -144,6 +163,7 @@ As of Sprint 007, `planning/ROADMAP.md` defines the road (Sprints 007 to 015). T
 **Current behavior:**
 - `POST /api/meetings` validates the Sprint 004 request shape, inserts `client_name`, `client_email`, and `meeting_type` into `meetings`, inserts `time_slots`, loads active legacy `team_members`, and sends notification emails.
 - `POST /api/responses` validates input, checks pending status, upserts legacy `responses`, runs quorum logic, updates confirmation fields, and sends confirmation emails.
+- Admin routes under `/api/admin/*` (roster, meeting types, identity) are documented in `docs/API.md`.
 
 **Planned domain behavior:** Future routes will be needed for magic link validation, professional response editing, admin pairing approval, client confirmation/cancellation, admin roster management, Super Admin settings, email template management, and scheduled-job actions.
 
@@ -158,6 +178,8 @@ As of Sprint 007, `planning/ROADMAP.md` defines the road (Sprints 007 to 015). T
 - `lib/types.ts`
 
 **Current behavior:** Supabase is integrated through public anon and service-role clients. The current SQL creates legacy Sprint 001 tables: `team_members`, `meetings`, `time_slots`, and `responses`, with RLS enabled and simple public/service policies.
+
+**Also built (Sprints 005 to 008):** the domain tables `professionals`, `admins`, `requests`, `slots` and the Sprint 008 meeting type tables (`meeting_types`, `meeting_type_durations`, `meeting_type_roles`, `meeting_type_pool`, `meeting_type_pool_roles`) exist in the live database. Only the roster, admin auth, and meeting type workspace use them so far. The five new tables and `professionals` are server-only through row level security.
 
 **Planned domain behavior:** `docs/DATA_MODEL.md` defines the future domain model: `requests`, `slots`, `professionals`, `professional_responses`, `pairings`, `admins`, `magic_links`, `email_templates`, and `platform_settings`. Migration strategy from the Sprint 001 legacy tables is intentionally deferred.
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Group Meet's future data model is centered on a client-submitted `requests` record, its proposed `slots`, and the professional availability needed for an admin to lock a final Lead/Support `pairing`. Clients and professionals do not have login accounts; they access request-specific pages through `magic_links`. Admins are the only login-backed users, with Super Admin permissions controlling admin management, email templates, and platform settings. This document describes the intended domain schema only (see "Planned changes (Sprint 008)" for the admin-defined meeting type model that supersedes the fixed meeting types, tiers, and Lead/Support fields below); existing Sprint 001 tables are treated as legacy and are not used as design anchors here.
+Group Meet's future data model is centered on a client-submitted `requests` record, its proposed `slots`, and the professional availability needed for an admin to lock a final Lead/Support `pairing`. Clients and professionals do not have login accounts; they access request-specific pages through `magic_links`. Admins are the only login-backed users, with Super Admin permissions controlling admin management, email templates, and platform settings. This document describes the intended domain schema only (see "Sprint 008 changes" for the admin-defined meeting type model that supersedes the fixed meeting types, tiers, and Lead/Support fields below); existing Sprint 001 tables are treated as legacy and are not used as design anchors here.
 
 ## Entities Table
 
@@ -404,9 +404,9 @@ Group Meet's future data model is centered on a client-submitted `requests` reco
 - `email_templates.updated_by_admin_id` references `admins.id`.
 - `platform_settings.updated_by_admin_id` references `admins.id`.
 
-## Planned changes (Sprint 008)
+## Sprint 008 changes (built; applied to the live database 2026-11-12)
 
-Status: planned, documentation only. No SQL or migration exists yet. Decisions 047 to 056 in `planning/DECISIONS.md` drive these changes. The Sprint 008 blueprint finalizes field details and the migration. Where this section and the entity definitions above disagree, this section is the intended direction.
+Status: built. Migration `supabase/migrations/008_meeting_types.sql` was applied by the operator. Decisions 047 to 063 in `planning/DECISIONS.md` drive these tables. The `professional_responses` and `pairings` changes below are still planned for Sprints 011 and 012. Where this section and the older entity definitions above disagree, this section is correct.
 
 ### New entities
 
@@ -458,26 +458,27 @@ Which professionals are in a meeting type's pool, and which roles each can fill.
 |---|---|---:|---|
 | `meeting_type_id` | uuid | No | References `meeting_types.id`. |
 | `professional_id` | uuid | No | References `professionals.id`. One row per professional per meeting type. |
-| `role_ids` (join) | uuid | No | A join entity (for example `meeting_type_pool_roles`) links a pool entry to each `meeting_type_roles.id` that professional can fill. Normalized, in line with Decision 030. |
+| *(roles)* | | | Stored in `meeting_type_pool_roles` (`meeting_type_id`, `professional_id`, `role_id`; composite primary key). Foreign keys: (`meeting_type_id`, `professional_id`) to this pool entry, and (`role_id`, `meeting_type_id`) to `meeting_type_roles (id, meeting_type_id)`, so a role from another meeting type cannot be attached. |
 
 ### Changes to existing entities
 
 | Entity | Change |
 |---|---|
-| `requests` | Replace the `meeting_type` enum field with `meeting_type_id` (references `meeting_types.id`). Add `duration_id` (references `meeting_type_durations.id`, the option the client picked). Add `created_by_admin_id` (nullable, references `admins.id`) so admin-created requests can be added later without a schema change (Decision 053). |
-| `professionals` | `tier` is kept until Sprint 008 migrates it into pool entries, then retired. |
-| `professional_responses` | `role_preference` (Lead / Support / Either) is replaced by the set of the pool roles the professional can take for this request (a join entity, per Decision 030). |
-| `pairings` | `lead_professional_id` and `support_professional_id` are replaced by one assignment per required role slot (a join entity linking the pairing, the role, and the professional). |
+| `requests` | Built: nullable `meeting_type_id` (references `meeting_types.id`), `duration_id` (references `meeting_type_durations.id`), and `created_by_admin_id` (references `admins.id`, Decision 053) were added, and `NOT NULL` was dropped from the old text `meeting_type`. Sprint 009 writes the new links and makes them required; the old column is retired in Sprint 014. |
+| `professionals` | Built: `tier` (text, default `general`, check `in_depth` or `general`) stays in the database but the app no longer reads or writes it (Decision 058). Dropped in Sprint 014. |
+| `professional_responses` | Planned (Sprint 011): `role_preference` (Lead / Support / Either) is replaced by the set of the pool roles the professional can take for this request (a join entity, per Decision 030). |
+| `pairings` | Planned (Sprint 012): `lead_professional_id` and `support_professional_id` are replaced by one assignment per required role slot (a join entity linking the pairing, the role, and the professional). |
 
 ### Enums superseded
 
-`meeting_type`, `professional_tier`, `professional_role`, and `role_preference` are replaced by data in the tables above. `request_status`, `admin_role`, `magic_link_*`, `email_template_key`, and `email_recipient_type` are unchanged.
+In the database these were text columns with check constraints, not enum types. `requests.meeting_type` and `professionals.tier` remain until Sprint 014 but are replaced by data in the tables above. `professional_role` and `role_preference` values live in `professional_responses` and `pairings` until Sprints 011 and 012 replace them. `request_status`, `admin_role`, `magic_link_*`, `email_template_key`, and `email_recipient_type` are unchanged.
 
-### Seed and migration direction (detailed in the Sprint 008 blueprint)
+### Seed and migration (as built)
 
-- Seed two meeting types, In-depth (one 75-minute option) and Short-form (one 45-minute option), each with Lead and Support roles at a required count of 1.
-- Migrate `professionals.tier` into pool entries: In-depth professionals into both seeded pools, General professionals into the Short-form pool only. This keeps today's behavior until admins reshape it.
-- Existing `requests` rows, if any, map from the old enum value to the matching seeded meeting type.
+- Seeded two inactive meeting types, `in-depth` (Standard, 75 minutes) and `short-form` (Standard, 45 minutes), each with roles Lead (1) and Support (1).
+- Seeded pools once, when each seeded type was first created (Decision 062): In-depth pool = professionals with tier `in_depth`; Short-form pool = all professionals; each entry holds both roles. The live roster was empty at the time, so both pools started empty.
+- `requests` rows with an old `meeting_type` value are backfilled to the matching seeded type (there were none).
+- Row level security: the five new tables and `professionals` allow only the `service_role` role.
 
 ## Open Questions
 

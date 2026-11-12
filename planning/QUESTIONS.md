@@ -1,6 +1,6 @@
 # Group Meet — Open Questions
 
-**Last updated:** 2026-11-06 (Sprint 007)
+**Last updated:** 2026-11-12 (Sprint 008)
 
 ## Q-001: What happens if the threshold is never reached?
 **Status:** Superseded by the domain workflow
@@ -25,9 +25,8 @@
 **Decision needed:** Neutral shadcn/ui defaults or custom branding?
 
 ## Q-006: Live database state
-**Status:** Open — operator to confirm
-**Context:** The operator reported migration `007` applied. Migrations `005` and `006` and the first Super Admin bootstrap (`docs/ADMIN_SETUP.md`) are unconfirmed.
-**Decision needed:** Operator confirms what is applied in the live Supabase project.
+**Status:** Resolved (2026-11-12)
+**Context:** The Sprint 008 preflight confirmed the `professionals`, `requests`, `slots`, and `admins` tables, the Sprint 006 admin policies, and one Super Admin row. Migration `008` was applied by the operator (twice, no error) and the post-check passed. Migration `007` was reported applied earlier.
 
 ## Q-007: Which email templates does the beta need?
 **Status:** Open
@@ -35,9 +34,8 @@
 **Decision needed:** Which are required for the beta (Sprint 010 scope).
 
 ## Q-008: Default minimum responses per meeting type
-**Status:** Open
-**Context:** Decision 051 makes the minimum number of responses editable per meeting type but does not set a default. Minimum matched slots defaults to 3.
-**Decision needed:** The default for `min_responses` (Sprint 008).
+**Status:** Resolved by Decision 057 (2026-11-12)
+**Context:** No default minimum; `min_responses` is optional per meeting type. Minimum matched slots defaults to 3.
 
 ## Q-009: Beta size
 **Status:** Open
@@ -48,3 +46,13 @@
 **Status:** Open
 **Context:** The legacy flow uses `team_members` seeded by SQL. They are not the same records as the `professionals` roster.
 **Decision needed:** Migrate them into `professionals` or drop them at Sprint 014.
+
+## Q-011: Development email safeguard
+**Status:** Open — for Sprint 010 planning
+**Context:** Real testing needs 4 or 5 inboxes. Proposal: a development setting that sends all outgoing mail to one operator inbox with the intended recipient in the subject, plus plus-addressing (`name+pro1@domain`) once the Resend domain is verified. Until then Resend's test sender can only reach the account owner.
+**Decision needed:** Adopt the redirect setting? Which inboxes and addresses for the beta check?
+
+## Q-012: Where does admin password reset go on the road?
+**Status:** Open — for the next Architect session
+**Context:** No "Forgot password" link or reset page exists (R-015). Recommendation: a small guarded sprint before the beta.
+**Decision needed:** Add it as its own sprint, or fold it into Sprint 015.

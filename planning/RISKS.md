@@ -1,6 +1,6 @@
 # Group Meet — Risks
 
-**Last updated:** 2026-11-06 (Sprint 007)
+**Last updated:** 2026-11-12 (Sprint 008)
 
 R-001 to R-005 described the Sprint 001 legacy quorum flow (no quorum reached, forwarded voting links, Resend failure, duplicate quorum trigger, duplicate requests). They are archived in this file's git history before Sprint 007 and are retired with the legacy flow in Sprint 014. R-004 and R-005 should be re-checked against the domain workflow when Sprints 009 and 012 are planned.
 
@@ -45,3 +45,19 @@ R-001 to R-005 described the Sprint 001 legacy quorum flow (no quorum reached, f
 **Likelihood:** Medium
 **Impact:** Medium
 **Mitigation:** See R-006; review before the beta.
+
+## R-013: Professionals table was open to every role (resolved in Sprint 008)
+**Risk:** The Sprint 005 migration created a policy named `service all` on `professionals` allowing all roles, and the Phase 1 SQL added a second public-role policy. Anyone holding the public key could have read or edited professionals' names and emails.
+**Finding (preflight, 2026-11-12):** Both policies existed on the live database. The table was empty (0 rows), so no real data was exposed.
+**Resolution:** Migration 008 dropped both and left only a `professionals_service_role_all` policy for the server role. The post-check confirmed no policy on `professionals` or the new tables applies to anyone but `service_role`.
+**Still open:** `requests` and `admins` keep a Phase 1 "service role full access" policy tied to the public role but limited by a condition; the legacy tables keep permissive policies (R-009). Sprint 014 reviews them.
+
+## R-014: Migration applied by hand with no local test database (mitigated)
+**Risk:** SQL is applied manually in the Supabase SQL editor and there is no local database to test it on.
+**Mitigation used for 008:** read-only preflight, transaction-wrapped idempotent migration, read-only post-check, rollback file. The pool-seeding rule could not be exercised because the roster was empty. Reuse this pattern for Sprint 014 and any later migration, and add a rehearsal with throwaway test rows when the data matters.
+
+## R-015: No admin password reset
+**Risk:** Admin login is email and password only. There is no "Forgot password" link and no page that receives a Supabase reset link, so a forgotten password or a deleted Auth user can lock out the only Super Admin. Supabase reset emails currently have nowhere to land.
+**Likelihood:** Medium (already hit once during Sprint 008 testing).
+**Impact:** High — no admin access.
+**Mitigation now:** set or change passwords directly in the Supabase dashboard (Authentication, Users). **Plan:** add a small guarded sprint before the beta (see the briefing's Plan corrections).

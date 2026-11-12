@@ -3,83 +3,95 @@
 > Bounded current-state snapshot. The Builder refreshes this at every sprint close; the Architect reads it first at every sprint start. Not a log. No source code, secrets, or credentials. See `docs/ARCHITECT_BRIEFING_SPEC.md`.
 
 **Project:** Group Meet
-**Sprint just completed:** Sprint 007 — Stabilize and Align
-**Last updated:** 2026-11-06
+**Sprint just completed:** Sprint 008 — Meeting Types, Roles, and Pools
+**Last updated:** 2026-11-12
 
 ## Where things stand
 
-The project folder now tells one story. The method files, the sprint history, and every planning document describe the same product: clients request a meeting through a link, professionals in a pool commit to times for the roles they can fill, and an admin approves before anything is confirmed. Meeting types become something an admin creates, with named lengths, required roles, and a pool of people. No app code changed, so the running app is exactly as it was. Next is Sprint 008, which builds the meeting type workspace.
+An admin can now build a meeting type from scratch: a title and link, named lengths like Short 30 or Long 60, the roles each meeting needs and how many people for each, and a pool of professionals who can fill them. It works end to end for the admin side, and the live database has the new tables and is locked down so only the server can reach professionals' contact details. Clients still cannot use any of it yet, so the next step is Sprint 009: the public link where a client picks a length and proposes times. One real gap showed up: there is no way to reset an admin password.
 
 ## Executive summary
 
 - **Business outcome:** Lets outside clients request a meeting with a team and books it once every required role has someone available and an admin approves.
-- **Current focus:** Moving the beta onto the domain workflow with admin-defined meeting types, in nine sprints (007 to 015).
-- **What is proven:** A client can submit the request form, admins can sign in and manage a professional roster, and the project builds cleanly. Planning documents, data model direction, and the road are now agreed and written down.
-- **What is not live:** Meeting types, roles, and pools; professional magic links; admin pairing; client confirmation; scheduled jobs; email templates and a verified sending domain; Super Admin tools. Real form submission and email delivery are still unverified. The running meeting flow is still the legacy one.
+- **Current focus:** Moving the beta onto the domain workflow, now with admin-defined meeting types in place and the client-facing side next.
+- **What is proven:** An admin can sign in, manage the professional roster, and create and configure meeting types with durations, roles, and pools. The live database accepted the migration twice with no error, the post-check passed, and professionals' data is no longer reachable with the public key.
+- **What is not live:** Clients cannot request through a meeting type (no public link yet), no email goes through the new model, professionals have no response page, there is no threshold or pairing, and there is no admin password reset. The old meetings flow still runs the real client form.
 
 ## Current status
 
-Phase: pre-beta, planning aligned. Branch `chore/sprint-007-stabilize` holds the Sprint 007 commits on top of the two unpushed fix commits. Nothing is pushed and no pull request exists. The live database matches the legacy flow plus the roster and admin tables.
+Phase: pre-beta, stage 2 of 9 on the road. Branch `sprint-008-meeting-types` holds four local commits on top of `main` (not pushed, no pull request). The live database has migration 008 applied. The two seeded meeting types and any walkthrough test data are inactive or test-only.
 
 ## Since last sprint
 
-- 120x method v22 files committed; all 35 manifest files match their recorded hashes.
-- Architect Pack Markdown files are now tracked in git; the installer in that folder stays ignored and was not touched.
-- `DOMAIN.md`, `DECISIONS.md` (047 to 056), `DATA_MODEL.md` (planned Sprint 008 section), `RISKS.md`, `QUESTIONS.md`, `ARCHITECTURE.md`, and `AGENTS.md` aligned. `docs/ARCHITECT_BRIEFING_SPEC.md` created. STATE trimmed with history archived.
-- Roadmap row 007 is `done`.
+- Migration 008 applied: five new tables, two seeded inactive meeting types, nullable links on `requests`, server-only access on the new tables and on `professionals`.
+- Admin API (seven route files) and admin screens (list, create, editor with durations, roles, thresholds, pool) built and walked through by the operator.
+- Roster: tier toggle, column, and field removed; the database column remains until Sprint 014.
+- Docs updated: DECISIONS 057 to 063, RISKS R-013 to R-015, QUESTIONS Q-006 and Q-008 resolved and Q-011 and Q-012 added, DATA_MODEL, ARCHITECTURE, API, VALIDATION. Sprint 006 history archived.
 
 ## Architecture / file map
 
-No change to application structure. See `docs/ARCHITECTURE.md`. New planning artifacts: `planning/ROADMAP.md`, `planning/STATUS.json`, `planning/archive/STATE-through-sprint-005.md`, `docs/ARCHITECT_BRIEFING_SPEC.md`. The legacy meetings flow (`app/api/meetings`, `app/api/responses`, `lib/quorum.ts`, `app/team`, `app/meetings`) is retired in Sprint 014.
+- `lib/meeting-types.ts`: types, validation, slug, readiness, database error mapping.
+- `app/api/admin/meeting-types/**`: seven routes. `app/admin/(protected)/meeting-types/**`: list, new, editor. `src/components/MeetingTypes/`: the screens' components.
+- `supabase/migrations/008_meeting_types.sql` with `supabase/preflight/008_preflight.sql`, `008_postcheck.sql`, and `supabase/rollbacks/008_meeting_types_rollback.sql`.
+- Tables used by the new code: `meeting_types`, `meeting_type_durations`, `meeting_type_roles`, `meeting_type_pool`, `meeting_type_pool_roles`, and `professionals` (read). None of it touches the legacy tables. Full map in `docs/ARCHITECTURE.md`.
 
 ## Decisions
 
-047 to 056 in `planning/DECISIONS.md`: domain flow for the beta; admin-defined meeting types; named duration options; roles and pools replace tiers; per-type threshold; Admin and Super Admin split; admin-created requests deferred but allowed for in the model; client picks the final slot; one link per meeting type; packs tracked in git.
+057 to 063 in `planning/DECISIONS.md`: no default minimum responses, tier removed from the roster, free-text roles and durations with inactive-by-default and an activation rule, public link at `/meet/<slug>`, server-only access for the new tables, seeded pools derived from tier once, snake_case admin API.
 
 ## Risks / watch-items
 
-R-006 to R-012 in `planning/RISKS.md`. Highest: two parallel designs until Sprint 014 (R-007), unverified Resend domain (R-008), permissive legacy access rules including public read (R-009), no automated tests (R-011).
+- R-015 (new): no admin password reset; a lockout of the only Super Admin is possible. Passwords are set in the Supabase dashboard for now.
+- R-008: Resend sending domain not verified, so email reaches only the account owner.
+- R-007 and R-009: legacy flow and its permissive access rules remain until Sprint 014. `requests` and `admins` keep a Phase 1 policy tied to the public role but limited by a condition.
+- R-011: no automated tests. R-006 and R-012: `npm audit` advisories unreviewed.
+- Walkthrough test data (a test meeting type and three test professionals with fake emails) may still be in the live database.
 
 ## Open questions for the Architect
 
-Q-002 calendar format, Q-005 branding, Q-006 live database state, Q-007 which email templates, Q-008 default minimum responses, Q-009 beta size, Q-010 legacy `team_members` data. All in `planning/QUESTIONS.md`.
+- Q-012: where password reset goes on the road (recommended: its own small guarded sprint before the beta).
+- Q-011: a development email setting that redirects all outgoing mail to one inbox, and the test inboxes for the beta check (plus-addressing once the domain is verified).
+- Q-005 branding, Q-007 which email templates the beta needs, Q-009 beta size, Q-010 legacy `team_members` data, Q-002 calendar format.
 
 ## Validation / test status
 
 **Tests:** 0 passing, 0 failing.
 
-No automated test suite exists. Typecheck and build pass. Sprint 007 changed no code. Not run: a live form submission, any email send, a deployed Vercel build, the admin bootstrap flow.
+No automated test suite exists. Typecheck and build pass. The operator ran the preflight, the migration twice, and the post-check in Supabase, and walked through the admin screens. The pool-seeding rule was not exercised because the roster was empty when the migration ran.
 
 ## Readiness signals
 
 | Signal | Status | Detail |
 | --- | --- | --- |
-| Application tests | attention | No automated tests exist; typecheck and build pass. |
-| Live submission | attention | A real form submission against Supabase has not been re-tested. |
+| Application tests | attention | No automated tests exist; typecheck and build pass and the operator walked through the screens. |
+| Live submission | attention | A real client request has not been run through the new model; that arrives in Sprint 009. |
 | Email delivery | attention | Resend sending domain is not verified; email reaches only the account owner. |
-| Delivery readiness | attention | Vercel linkage and production environment variables are not validated. |
+| Admin access recovery | attention | No password reset page; a lost password must be fixed in the Supabase dashboard. |
 
 ## Evidence
 
 - `npx tsc --noEmit`: exit 0, no output.
-- `npm run build`: exit 0, 12 routes listed, `proxy` middleware present.
-- `git diff --stat 6f29d3c3 -- app lib src supabase public`: no output (no application changes).
-- `git check-ignore -v` on the installer and the Sprint 007 pack: only the installer is reported ignored (`.gitignore` line 26).
-- Manifest hash check over `.120x/method-manifest.json` (35 files, line endings normalised): no missing or differing files.
-- `grep -c "^| 04[7-9]\|^| 05[0-6]" planning/DECISIONS.md`: 10 rows (047 to 056).
-- `git status --short` and `git log --oneline 6f29d3c3..HEAD`: see the final report; the only expected untracked or modified file is `next-env.d.ts`.
+- `npm run build`: exit 0; the route list includes `/admin/meeting-types`, `/admin/meeting-types/new`, `/admin/meeting-types/[id]`, and seven `/api/admin/meeting-types…` routes.
+- Dev server smoke test while signed out (port 3107, then stopped): the three admin pages returned 307 to `/admin/login`; the API returned 401 for GET, POST, PATCH, PUT, and DELETE.
+- `grep -rn "tier" app/api/admin/professionals src/components/ProfessionalRoster`: no output.
+- `grep -inE "drop table|delete from|truncate"` on the migration: no output. Write-statement grep on the preflight: no output.
+- `git diff --stat main..HEAD` for the legacy flow, date/time picker, and `package.json`: no output. All other changed paths are within the sprint's `owns` list.
+- Slug example: `slugify("In-Depth Intro, Part 2!")` returned `in-depth-intro-part-2`.
+- Operator-run in the Supabase SQL editor (reported by the operator): preflight results reviewed; migration applied twice; post-check showed five tables with row security on, only `service_role` policies, no non-server policy on `professionals`, two seeded types with the expected durations and roles, nullable request columns, and the foreign key that blocks a role from another meeting type. A read-only check of `admins` and the Auth user (run by the Builder with the project keys) showed the email matches exactly.
 
 ## Plan corrections
 
-- The blueprint's staging list omitted `planning/ROADMAP.md`, `planning/STATUS.json`, and the sprint folder, which would have broken the clean-tree criterion. They were included in the final commit.
-- The blueprint said to keep the follow-up fix as the one prior sprint in STATE. Sprint 006 and its follow-up are one unit, so both were kept; Sprint 005 and older went to the archive.
-- `docs/ARCHITECTURE.md` said Super Admin work was "Sprint 014"; the roadmap puts it in Sprint 015, so the two mentions were corrected (the blueprint allowed one line only).
-- `docs/ARCHITECTURE.md` still describes the legacy flow's current behavior in detail; that is accurate until Sprint 014 and was left as is.
+- The pack put two roster components in Stage B, but the build would not compile after Stage A removed tier from the roster types, so they moved into Stage A.
+- The migration originally left the Phase 1 "service role full access" policy on `professionals`. It is tied to the public role, so it would have failed the sprint's own acceptance rule; the migration now drops it too (the preflight showed it existed).
+- The pool-seeding acceptance check could not discriminate right and wrong implementations because the live roster was empty (0 and 0). The rule is correct by reading but unproven.
+- The pack named the pool body `roleIds`; the built API uses `role_ids` to match the rest of the admin API (Decision 063).
+- The roadmap has no sprint for admin password reset or for a development email safeguard. Both showed up during testing (a login lockout and the 4 to 5 inbox need). The Architect should amend the road next session.
+- The blueprint did not say how to treat a stale session after recreating an Auth user. The operator hit "not authorized" until the dev server was restarted. Admin sign-in errors cannot tell "no session" from "no admin record".
 
 ## Recommended next Architect action
 
-- **Do:** Plan Sprint 008 (meeting types, roles, and pools): name the tables, the migration, who applies it, and the seed and migration of today's tiers into pools.
+- **Do:** Plan Sprint 009 (client request on the new tables with `/meet/<slug>`, a duration choice, and the home page list of active types) and add a small admin password reset sprint to the road before the beta; include the development email safeguard in Sprint 010.
 - **Owner:** The Architect, with the operator.
-- **Decision:** The default minimum responses per meeting type (Q-008), and whether to confirm live database state (Q-006) before the migration is written.
+- **Decision:** Whether password reset is its own sprint or part of Sprint 015, and how Sprint 009 treats the existing public form on `/` while the legacy flow still runs.
 
-Operator housekeeping: move the installer out of `planning/architect-packs/`, confirm which migrations are applied, start Resend domain verification, and push the branch when ready.
+Operator housekeeping: push `sprint-008-meeting-types` and open a pull request when ready, remove or leave inactive the test meeting type and test professionals, start Resend domain verification, and move the installer out of `planning/architect-packs/`.

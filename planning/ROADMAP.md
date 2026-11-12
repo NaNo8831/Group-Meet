@@ -9,7 +9,7 @@
 | # | Sprint | Phase | Status | Why it matters |
 | --- | --- | --- | --- | --- |
 | 007 | Stabilize and align | Foundation | done | Gets the folder, the method files, and every planning document describing the same product, so the build stops drifting. |
-| 008 | Meeting types, roles, and pools | Meeting setup | planned | Lets an admin create a meeting type with a title, landing page, named durations, required roles, and a pool of professionals. Everything after this reads from it. |
+| 008 | Meeting types, roles, and pools | Meeting setup | done | Lets an admin create a meeting type with a title, landing page, named durations, required roles, and a pool of professionals. Everything after this reads from it. |
 | 009 | Client request on the new tables | Client and email | planned | A client opens the link for one meeting type, picks a duration, proposes times, and the request is saved on the new model. |
 | 010 | Email foundation | Client and email | planned | Emails come from database templates and actually reach people, which needs the Resend sending domain verified. |
 | 011 | Professional links and responses | Booking workflow | planned | Pool professionals get a private link, pick slots, and say which roles they can fill, until the admin locks the pairing. |
