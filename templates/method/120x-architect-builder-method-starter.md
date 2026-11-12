@@ -36,6 +36,50 @@ The project folder is the durable source of truth.
 
 ---
 
+## The Return Handoff
+
+The handoff is a folder in **both** directions. The Architect Pack and sprint files flow down (Architect → Builder); the **Architect Briefing** flows back up (Builder → Architect) at every sprint close.
+
+At the end of each sprint the Builder writes or refreshes `planning/ARCHITECT_BRIEFING.md`: a bounded, current-state snapshot (status, executive summary, since-last-sprint delta, file/architecture map, decisions, risks, open questions, validation status, readiness signals, and a recommended next action with an owner and named decision). The Architect reads it first at the start of every sprint to re-ground without re-uploading the repo.
+
+The briefing is a **derived abstraction** — paths, structure, decisions, and state only. It never contains source code, secrets, or credentials, and it is a bounded snapshot, not a growing log. See `docs/ARCHITECT_BRIEFING_SPEC.md` for the full spec and `templates/method/ARCHITECT_BRIEFING.template.md` for the blank shape.
+
+At sprint close, write the v8 executive fields inline: `## Executive summary`
+with `Business outcome`, `Current focus`, `What is proven`, and `What is not
+live`; `## Readiness signals` with two to four rows whose status is exactly
+`passed` or `attention`; `**Tests:** N passing, N failing.` at the start of
+`## Validation / test status`; and `Do`, `Owner`, and `Decision` above the
+prose in `## Recommended next Architect action`. Attention is an honest
+result. Hiding a failing signal to make the board look green breaks the
+method. Never invent a judgment the completed work cannot support; leave it
+visibly empty instead.
+
+---
+
+## The Roadmap
+
+Every project carries `planning/ROADMAP.md`, a living estimate of the whole
+road in plain language. The Architect lays out "about N sprints" after
+discovery, writes the roadmap from `templates/method/ROADMAP.template.md`
+before or with the first pack, and reviews it with the briefing at every later
+session. Roadmap changes are visible git edits, never silent rewrites.
+
+The table uses only `planned` and `done`. `planning/STATUS.json` remains the
+one source for where the project is right now. For a mid-flight adoption,
+earlier history is recorded once with `Completed before this roadmap existed`;
+the table starts with the road ahead instead of repeating every shipped sprint.
+The optional `Phase` column groups consecutive rows under the same short,
+human name. Consecutive rows with the same short human phase name form a
+derived band. A roadmap without `Phase` remains valid. Band ranges and details
+come from the rows; they are never separately authored.
+
+At sprint close, the Builder changes the finished sprint's row from `planned`
+to `done`. If the work proved the road should change, the Builder reports that
+drift in the briefing's `## Plan corrections`; the Architect amends the road
+next session.
+
+---
+
 ## Roles
 
 ### Architect Layer
@@ -61,6 +105,13 @@ The Architect produces durable written artifacts.
 
 The Architect does not write production application code unless the user explicitly approves implementation work in an active sprint.
 
+The Architect writes or updates `planning/ROADMAP.md` alongside every pack.
+It always describes the count as "about N sprints," never as a promise.
+At every session, the Architect reads `Executive summary`, `Readiness signals`,
+and the `Do` / `Owner` / `Decision` lines as named inputs. It keeps optional
+roadmap phases current through visible, agreed edits and never invents a phase
+or executive judgment.
+
 ### Builder Layer
 
 The Builder implements an approved sprint.
@@ -72,6 +123,11 @@ The Builder does not redefine scope, invent business rules, or improvise broad p
 The Builder builds to the approved requirements, blueprint, and acceptance criteria.
 
 The Builder updates project state, decisions, risks, validation notes, and docs when the sprint requires it.
+
+At sprint close, keep the boot files bounded: move finished history verbatim into `planning/archive/` (`STATE.md` keeps the current picture plus one prior sprint; `QUESTIONS.md` keeps open rows; `DECISIONS.md` keeps recent entries plus a one-line index of everything archived). Copy first, verify the copy, then trim. Never summarize; never trim without a verified copy; if the copy cannot be verified, leave the file unbounded and say so.
+
+At close, the Builder marks the matching roadmap row `done` and reports road
+drift without re-planning it.
 
 ---
 
@@ -151,6 +207,7 @@ planning/DOMAIN.md
 planning/RISKS.md
 planning/QUESTIONS.md
 planning/FILE_INVENTORY.md
+planning/ROADMAP.md
 ```
 
 Each implementation sprint should live in:
@@ -287,6 +344,8 @@ Before implementation, Builder must read:
 11. active sprint `handoff-prompt.md` under `planning/sprints/`
 12. relevant docs under `docs/`
 
+`planning/archive/` is finished history. Do not read it at session start; read it only when the current work touches something it records.
+
 Then Builder summarizes:
 
 1. what the sprint is supposed to accomplish
@@ -296,6 +355,18 @@ Then Builder summarizes:
 5. blockers or ambiguities
 
 Builder should wait for approval when the sprint handoff asks for an approval checkpoint.
+
+The normal code gate remains mandatory for standalone `/build` and
+`$120x-builder`: the human approves the exact implementation plan. There are two
+exceptions, and both begin only after the human says `go`. In an active `/fly`
+or `$120x-fly` session, a genuinely fresh Architect's `pass` on the exact Builder
+plan is the approval, so implementation proceeds without a second human prompt.
+That authority ends with the one Pack and sprint created in that flight. In an
+active `/sprint` or `$120x-sprint` session, the human's `go` is the approval: the
+Builder builds without a second prompt unless the sprint is guarded (login or
+permissions, money, personal data, migrations, deletes, irreversible outside
+actions), in which case the human approves the build plan first. That authority
+ends with the one `SPRINT.md` created in that session.
 
 ---
 
@@ -307,6 +378,18 @@ When Architect creates a sprint, it should produce:
 - `blueprint.md`: how to build it
 - `acceptance.md`: what done means
 - `handoff-prompt.md`: exact Builder prompt
+
+Every Builder-ready `handoff-prompt.md` carries a **task contract** — five short fields the Builder can be held to:
+
+- `objective`: the one outcome this sprint exists for
+- `owns`: the files or areas the Builder may change
+- `must_not`: what is off-limits
+- `acceptance`: the observable conditions that mean done
+- `verification`: the exact commands that produce the evidence
+
+If the Architect cannot fill these in, the sprint is not ready to hand off yet — keep talking until it is.
+
+**Size the sprint honestly.** A sprint that touches an app-wide surface or a long list of files should be planned as two or more operator-gated stages, with the human eyeballing real output between stages. Small, focused sprints don't need staging — most sprints should be small enough not to.
 
 Good sprint files are practical, scoped, and testable. They avoid vague directives like "improve the app" unless they are broken down into observable behavior.
 

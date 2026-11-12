@@ -1,41 +1,47 @@
 # Group Meet — Risks
 
-## R-001: No quorum is ever reached
-**Risk:** All Leaders are busy during Support-available slots and vice versa. Meeting stays pending indefinitely.
-**Likelihood:** Low–Medium
-**Impact:** Medium — Participant hears nothing
-**Mitigation (Phase 1):** None automated. Team member manually coordinates offline.
-**Phase 2 plan:** Add a timeout notification and/or manual override by an admin.
+**Last updated:** 2026-11-06 (Sprint 007)
 
-## R-002: Voting link forwarded or reused
-**Risk:** A team member forwards their unique voting link and someone else votes on their behalf.
-**Likelihood:** Low
-**Impact:** Low — wrong person's availability recorded
-**Mitigation (Phase 1):** Acceptable risk given trusted internal audience.
-**Phase 2 plan:** Supabase magic link auth replaces query param.
+R-001 to R-005 described the Sprint 001 legacy quorum flow (no quorum reached, forwarded voting links, Resend failure, duplicate quorum trigger, duplicate requests). They are archived in this file's git history before Sprint 007 and are retired with the legacy flow in Sprint 014. R-004 and R-005 should be re-checked against the domain workflow when Sprints 009 and 012 are planned.
 
-## R-003: Resend email delivery failure
-**Risk:** Team notification email fails to send — team members never know a request came in.
-**Likelihood:** Low
-**Impact:** High — meeting stays pending silently
-**Mitigation:** Log all Resend errors. Meeting creation does not fail. Manual re-trigger possible via Supabase dashboard in emergency.
-
-## R-004: Duplicate quorum trigger
-**Risk:** Two responses inserted nearly simultaneously both trigger the quorum check, resulting in duplicate confirmation emails.
-**Likelihood:** Low
-**Impact:** Medium — confusing for recipients
-**Mitigation:** Check `meeting.status === 'pending'` before running quorum check and before sending emails. Use Supabase's atomic update to set status to `confirmed` only once.
-
-## R-005: Participant submits duplicate requests
-**Risk:** Participant submits the form multiple times, creating duplicate meeting records.
+## R-006: Framework dependency advisories
+**Risk:** `npm audit` has reported advisories. The app is now on Next.js 16.2.x (not 14, as first planned), so the original advisories may no longer apply and new ones are unreviewed.
 **Likelihood:** Medium
-**Impact:** Low — wastes team bandwidth
-**Mitigation (Phase 1):** No deduplication logic. Accept as known limitation.
-**Phase 2 plan:** Add email-based deduplication check within a time window.
+**Impact:** Medium–High depending on deployment exposure.
+**Mitigation:** Review `npm audit` output before the beta (Sprint 015) and record the result.
 
-## R-006: Next.js 14 dependency advisories
-**Risk:** `npm audit` reports advisories against the requested Next.js 14 stack.
+## R-007: Two parallel designs until Sprint 014
+**Risk:** The legacy meetings flow (`meetings`, `time_slots`, `team_members`, `responses`) and the domain model both exist. New pages built on the wrong tables would be thrown away.
 **Likelihood:** Medium
-**Impact:** Medium–High depending on deployment exposure and affected features.
-**Mitigation (Phase 1):** Keep the requested Next.js 14 scope, avoid middleware/image configuration not needed by v1, and deploy behind Vercel defaults.
-**Phase 2 plan:** Plan a framework upgrade sprint and retest the MVP on the current supported Next.js major version.
+**Impact:** High — wasted sprints and confusing behavior.
+**Mitigation:** Decision 047. Every blueprint from Sprint 008 on names the tables each page reads and writes. Legacy code is untouched until Sprint 014.
+
+## R-008: Email delivery blocked on a verified sending domain
+**Risk:** The Resend sending domain is not verified, so email reaches only the Resend account owner. Every workflow step after the request depends on email.
+**Likelihood:** High until the operator verifies DNS (Google Workspace).
+**Impact:** High — no real professional or client can be tested.
+**Mitigation:** Sprint 010 is early on the road. Operator completes DNS verification before or during Sprint 010.
+
+## R-009: Permissive access rules on legacy tables
+**Risk:** Row Level Security policies on legacy tables use permissive rules, including public read on `meetings`, `time_slots`, and `responses`. Client names and emails stored there could be read publicly.
+**Likelihood:** Medium
+**Impact:** High — personal data exposure.
+**Mitigation:** Retire or tighten these policies in Sprint 014. New domain tables must ship with restrictive policies from the start.
+
+## R-010: Team voting links carry the member id with no token
+**Risk:** `/team/meetings/[id]?member=[uuid]` gives access with only an id in the query string. A forwarded or guessed link acts as that professional.
+**Likelihood:** Low (internal audience) but higher once real professionals take part.
+**Impact:** Medium — wrong availability recorded.
+**Mitigation:** Sprint 011 replaces it with tokenized magic links (hashed tokens, Decision 033).
+
+## R-011: No automated tests
+**Risk:** `tests/` holds only a README. Verification so far is typecheck, build, and manual checks.
+**Likelihood:** High
+**Impact:** Medium — regressions in the threshold and pairing logic would be silent.
+**Mitigation:** Add tests for threshold and role-coverage logic in Sprint 012 and for business-day logic in Sprint 014. Blueprints name the tests.
+
+## R-012: `npm audit` advisories not reviewed
+**Risk:** Advisories flagged earlier have not been triaged.
+**Likelihood:** Medium
+**Impact:** Medium
+**Mitigation:** See R-006; review before the beta.

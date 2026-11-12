@@ -1,0 +1,6 @@
+interface:
+  display_name: "120x Sprint"
+  short_description: "Plan, build, check, and review one sprint"
+  default_prompt: "Use $120x-sprint to run one 120x sprint from this project folder."
+policy:
+  allow_implicit_invocation: false

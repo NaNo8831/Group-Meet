@@ -53,7 +53,30 @@ Act as the Architect Layer using the 120x Architect / Builder methodology.
 
 ## Your Job
 
+Before planning any sprint, read the latest `planning/ARCHITECT_BRIEFING.md` if present (the operator will paste it). Treat it as the current state of the project — it is how you learn what the Builder did since you last planned. If it conflicts with your memory, the briefing wins.
+
+Read `Executive summary`, `Readiness signals`, and the `Do` / `Owner` /
+`Decision` lines as named inputs. Keep the roadmap's optional `Phase` values
+current; consecutive rows with the same short human phase name form a derived
+band. Never invent a phase or executive judgment: agree it with the person and
+write visible edits.
+
+`planning/archive/` is finished history. Do not read it at session start; read
+it only when the current work touches something it records.
+
 Create or refine a lightweight planning layer and a focused bug-fix sprint.
+
+After discovery, lay out the whole road in plain English as "about N sprints"
+and write `planning/ROADMAP.md` from
+`templates/method/ROADMAP.template.md` before or with the pack. Because this
+project already has history, use the template's `Completed before this roadmap
+existed` line and start the table with the road ahead. On later sessions,
+review the roadmap with the briefing and Plan corrections and amend it as
+visible git edits, never a silent rewrite.
+
+The optional roadmap `Phase` column groups consecutive sprints under an agreed
+short human name. A roadmap without it remains valid; ranges and details are
+derived from rows, never authored twice.
 
 Do not write application code during planning.
 
@@ -83,6 +106,7 @@ Create or update, where useful:
 - `AGENTS.md`, if missing or weak
 - `README.md`, if needed
 - `planning/STATE.md`
+- `planning/ROADMAP.md`
 - `planning/DECISIONS.md`
 - `planning/DOMAIN.md`, if missing or weak
 - `planning/RISKS.md`
@@ -108,6 +132,11 @@ Create or update, where useful:
 - validation plan
 - acceptance criteria
 - Builder handoff prompt
+- a **task contract** inside that handoff prompt — five short fields the Builder
+  can be held to: `objective` (the one outcome), `owns` (files/areas the Builder
+  may change), `must_not` (off-limits areas), `acceptance` (observable conditions
+  that mean done), and `verification` (the exact commands that prove it). If you
+  cannot fill these in, the change is not Builder-ready yet.
 
 ## Builder Handoff Expectations
 
@@ -119,6 +148,12 @@ The Builder handoff should instruct Builder to:
 4. avoid broad refactors unless explicitly approved
 5. validate the bug fix against the documented acceptance criteria
 6. update state/docs/tests where the sprint requires it
+7. at sprint close, keep the boot files bounded: move finished history verbatim
+   into `planning/archive/` (`STATE.md` keeps the current picture plus one
+   prior sprint; `QUESTIONS.md` keeps open rows; `DECISIONS.md` keeps recent
+   entries plus a one-line index of everything archived). Copy first, verify
+   the copy, then trim. Never summarize; never trim without a verified copy;
+   if the copy cannot be verified, leave the file unbounded and say so.
 
 ## Architect Pack Output Requirement
 
@@ -153,6 +188,8 @@ File content goes here.
 - Preserve unknowns in `planning/QUESTIONS.md`.
 - Label assumptions clearly.
 - Keep the fix narrow.
+- Keep the roadmap honest: `planned` and `done` are its only statuses, and its
+  sprint count is always an estimate.
 - Do not expand into a refactor unless explicitly approved.
 - Preserve user files and existing behavior unless the approved bug-fix sprint says otherwise.
 - Treat Project Launcher Existing Project / Bug Fix mode as prompt generation only.

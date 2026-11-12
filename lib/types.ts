@@ -12,9 +12,13 @@ export interface TeamMember {
 
 export interface Meeting {
   id: string;
-  participant_name: string;
-  participant_email: string;
-  topic: string;
+  client_name: string | null;
+  client_email: string | null;
+  meeting_type: "in_depth" | "short_form" | null;
+  /** Legacy columns: only populated on rows created before Sprint 004. */
+  participant_name?: string | null;
+  participant_email?: string | null;
+  topic?: string | null;
   status: MeetingStatus;
   confirmed_slot_id: string | null;
   confirmed_leader_id: string | null;

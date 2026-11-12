@@ -5,7 +5,7 @@
 **Name:** Group Meet  
 **Client:** Private  
 **Description:** Group Meet lets external Participants request a meeting with a team, then automatically confirms the booking once one Leader and one Support have both indicated availability for the same time slot.  
-**Tech stack:** - Next.js 14 (App Router)- TypeScript- Supabase (Postgres + Row Level Security)- Vercel (hosting)- Resend (transactional email)- shadcn/ui + Tailwind CSS- react-hook-form + zod- date-fns  
+**Tech stack:** - Next.js 16 (App Router)- TypeScript- Supabase (Postgres + Row Level Security)- Vercel (hosting)- Resend (transactional email)- shadcn/ui + Tailwind CSS- react-hook-form + zod- date-fns  
 **Planning folder:** `group-meet/`  
 **Implementation repo:** Downloaded project folder  
 **Created:** 2026-06-05
@@ -65,9 +65,9 @@ This folder was generated from:
 
 `Hosted virtual scaffold`
 
-The current phase is Discovery / Architecture.
+The current phase is staged implementation. The road is in `planning/ROADMAP.md`; `planning/STATUS.json` says where the project is now.
 
-Until an active sprint explicitly authorizes implementation, do not write production application code.
+Implementation is authorized only by an active sprint listed in `planning/ROADMAP.md`. Until a sprint explicitly authorizes it, do not write production application code.
 
 ---
 
@@ -76,7 +76,7 @@ Until an active sprint explicitly authorizes implementation, do not write produc
 - Do not write production application code unless the active sprint explicitly authorizes it.
 - Do not redefine scope or invent product behavior.
 - Do not expand scope into a dashboard or project management system unless the Architect documents that scope.
-- Do not add auth, database, cloud sync, CRM, invoicing, or GitHub API automation unless explicitly authorized by an active sprint.
+- Auth, database (Supabase), and email (Resend) are part of the product. Add or change them only when an active sprint names them. Do not add cloud sync, CRM, invoicing, or GitHub API automation unless an active sprint explicitly authorizes it.
 - Do not overwrite existing user project folders without an explicit confirmation strategy.
 - Do not delete user files.
 - Do not store secrets, API keys, passwords, tokens, or private credentials.

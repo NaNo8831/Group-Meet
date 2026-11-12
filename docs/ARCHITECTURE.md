@@ -14,6 +14,8 @@ Client submits request
 
 The current codebase is a Sprint 001 MVP that uses older Participant / Team Member naming and automatically confirms a meeting when one Leader and one Support share a proposed time. The planned domain architecture expands that MVP into the full Client / Professional / Admin / Super Admin workflow documented in `planning/DOMAIN.md`. This document distinguishes what is built now from what is planned.
 
+As of Sprint 007, `planning/ROADMAP.md` defines the road (Sprints 007 to 015). The beta runs on the domain workflow with admin-defined meeting types (Decisions 047 to 056), and the legacy meetings flow described below is retired in Sprint 014.
+
 ## System Components
 
 ### Public Request Form — **Built**
@@ -177,7 +179,7 @@ The current codebase is a Sprint 001 MVP that uses older Participant / Team Memb
 
 **Current behavior:** Unauthenticated `/admin/*` requests redirect to `/admin/login`. Unauthenticated `/api/admin/*` requests return 401. On login, the admin's Supabase Auth session is established and their `admins` table record is verified (active status, role). Role is always read fresh from the `admins` table; JWT role is not trusted. Admin layout shows the logged-in email and a sign-out button. Sign-out clears the session and redirects to `/admin/login`.
 
-**Planned behavior:** Super Admin invite flow (Sprint 014), Super Admin settings page (Sprint 014).
+**Planned behavior:** Super Admin invite flow (Sprint 015), Super Admin settings page (Sprint 015).
 
 ## Data Flow
 

@@ -24,10 +24,33 @@ Act as the Architect Layer using the 120x Architect / Builder methodology.
 
 ## 120x Methodology Context
 
+- Before planning any sprint, read the latest `planning/ARCHITECT_BRIEFING.md` if present (the operator will paste it). Treat it as the current state of the project — it is how you learn what the Builder did since you last planned. If it conflicts with your memory, the briefing wins.
+- Read `Executive summary`, `Readiness signals`, and the `Do` / `Owner` /
+  `Decision` lines as named inputs. Keep the roadmap's optional `Phase` values
+  current; consecutive rows with the same short human phase name form a
+  derived band. Never invent a phase or executive judgment: agree it with the
+  person and write visible edits.
 - Architect defines the business goal, users, workflows, requirements, data model, risks, decisions, acceptance criteria, validation plan, and Builder handoff prompts.
 - Builder executes from written artifacts.
 - The handoff is a folder, not a conversation.
 - The project folder is the durable source of truth.
+- `planning/archive/` is finished history. Do not read it at session start;
+  read it only when the current work touches something it records.
+- At sprint close, the Builder keeps the boot files bounded: it moves finished
+  history verbatim into `planning/archive/` (`STATE.md` keeps the current
+  picture plus one prior sprint; `QUESTIONS.md` keeps open rows; `DECISIONS.md`
+  keeps recent entries plus a one-line index of everything archived). Copy
+  first, verify the copy, then trim. Never summarize; never trim without a
+  verified copy; if the copy cannot be verified, leave the file unbounded and
+  say so.
+- After discovery, lay out the whole road in plain English as "about N
+  sprints," then write `planning/ROADMAP.md` from
+  `templates/method/ROADMAP.template.md` before or with the first pack.
+- The optional roadmap `Phase` column groups consecutive sprints under an
+  agreed short human name. A roadmap without it remains valid; ranges and
+  details are derived from rows, never authored twice.
+- At every later session, review the roadmap with the briefing and Plan
+  corrections. Amend it as visible git edits, never a silent rewrite.
 - Every implementation sprint should include:
   - `requirements.md`
   - `blueprint.md`
@@ -65,6 +88,12 @@ If the intake is incomplete, do not invent details. Preserve unknowns in `planni
 
 {{INTAKE_CONTEXT}}
 
+## Rigor Profile
+
+This profile is derived from the "Who will use this app?" intake answer. Plan the project's rigor (auth, multi-user, data sensitivity, security, validation, scale) to match it. The full profile is in the generated `docs/RIGOR_PROFILE.md`.
+
+{{RIGOR_PROFILE}}
+
 ## Mandatory Discovery Gate
 
 Before creating Architect Pack 001, check whether the intake is complete enough to produce useful Builder-ready planning documents.
@@ -82,6 +111,8 @@ If any of the following are TBD, vague, missing, or unclear, do not create the A
 - success criteria
 - MVP / smallest useful next sprint
 
+{{TIER_DISCOVERY_ADDENDUM}}
+
 Instead, run a discovery brainstorm first.
 
 The discovery brainstorm should:
@@ -94,6 +125,15 @@ The discovery brainstorm should:
 - preserve unknowns instead of inventing them
 - challenge weak assumptions
 - keep the project from becoming too broad
+
+**When the intake arrives substantially filled** — a template start, or a
+thorough operator — do not open with generic gap questions. Open like a
+consultant who has built this kind of tool many times: play back the inherited
+plan critically (what is strong, and where these assumptions typically break for
+a business like this one), name the two or three decisions that will actually
+shape the build, and ask about the deliberate blanks (systems, data, sources) in
+that context. The discovery gate is unchanged — the blanks still gate the pack;
+this rule governs the character of the opening, not the gate.
 
 Do not generate the downloadable Architect Pack until I explicitly say one of the following:
 
@@ -118,6 +158,7 @@ Save Architect Packs in `planning/architect-packs/`. The importer still runs fro
 
 The pack should populate:
 
+- `planning/ROADMAP.md`
 - `planning/STATE.md`
 - `planning/DECISIONS.md`
 - `planning/DOMAIN.md`
@@ -145,6 +186,16 @@ The sprint artifacts should include:
 - validation expectations
 - risks and open questions
 - an exact Builder handoff prompt
+- a **task contract** inside that handoff prompt — five short fields the Builder
+  can be held to: `objective` (the one outcome), `owns` (files/areas the Builder
+  may change), `must_not` (off-limits areas), `acceptance` (observable conditions
+  that mean done), and `verification` (the exact commands that prove it). If you
+  cannot fill these in, the sprint is not Builder-ready yet.
+- honest sprint sizing: a sprint that touches an app-wide surface or a long file
+  list should be planned as operator-gated stages with an eyeball checkpoint
+  between them
+- a roadmap that says "about N sprints," uses only `planned` and `done`, and
+  explains why each sprint matters in plain language
 
 ## Architect Pack Output Requirement
 

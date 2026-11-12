@@ -20,7 +20,7 @@ Sprint 004 local validation:
 - `npx tsc --noEmit` passed
 - `npm run build` passed
 - Console duration assertions passed for both Short-form 45-minute and In-depth 75-minute slot derivation
-- Live submit currently fails until legacy `meetings.participant_name`, `meetings.participant_email`, and `meetings.topic` are nullable or defaulted
+- Live submit currently fails until legacy `meetings.participant_name`, `meetings.participant_email`, and `meetings.topic` are nullable or defaulted (migration `007_relax_legacy_meeting_columns.sql` fixes this; re-test a live submit after applying it)
 
 ## Builder Validation Run — 2026-06-05
 
