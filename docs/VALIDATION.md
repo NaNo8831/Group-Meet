@@ -69,3 +69,20 @@ Sprint 004 local validation:
 - [ ] All env vars set in Vercel
 - [ ] Supabase schema and seed applied to production project
 - [ ] Test full happy path on production URL before sharing
+
+
+## Sprint 008 Validation
+
+Rules enforced by the database and repeated in `lib/meeting-types.ts`:
+- Meeting type: title 1 to 120 characters; slug lowercase letters, digits, single hyphens, 3 to 60 characters, unique; description plain text up to 2000; `min_matched_slots` at least 1; `min_responses` null or at least 1.
+- Duration: label 1 to 40, unique per meeting type; minutes 5 to 480 in steps of 5.
+- Role: name 1 to 40, unique per meeting type; `required_count` at least 1.
+- A pool role must belong to the same meeting type as its pool entry (composite foreign key).
+- Turning a meeting type on needs at least one duration and one role. Removing the last duration or role of an active type is refused.
+
+Evidence (2026-11-12):
+- `npx tsc --noEmit` exit 0; `npm run build` exit 0 with 3 new admin pages and 7 new API routes.
+- Signed out: the three admin pages redirect to `/admin/login` (307) and all new API routes return 401 for GET, POST, PATCH, PUT, DELETE.
+- Operator ran the preflight, migration `008` twice, and the post-check in the Supabase SQL editor: five new tables with row security on and only `service_role` policies; no non-server policy on `professionals`; two seeded types with the expected durations and roles; `requests` new columns nullable.
+- Not exercised: the pool-seeding rule (roster was empty), the role-integrity rule beyond viewing its constraint, and automated tests (none exist).
+- Operator walkthrough passed: create a meeting type, refused activation without a duration and role, add durations and roles, assign a pool, activate, and view the list.

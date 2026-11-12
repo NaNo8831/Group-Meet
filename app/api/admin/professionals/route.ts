@@ -5,8 +5,7 @@ import { getAuthenticatedAdminFromRequest } from "@/lib/auth";
 
 const createSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Valid email is required"),
-  tier: z.enum(["in_depth", "general"]).optional().default("general")
+  email: z.string().email("Valid email is required")
 });
 
 export async function GET(request: NextRequest) {
@@ -53,8 +52,7 @@ export async function POST(request: NextRequest) {
     .from("professionals")
     .insert({
       name: parsed.data.name,
-      email: parsed.data.email,
-      tier: parsed.data.tier
+      email: parsed.data.email
     })
     .select()
     .single();

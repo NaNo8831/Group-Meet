@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ProfessionalTier } from "./types";
 
 interface AddProfessionalFormProps {
   onAdded: () => void;
@@ -10,7 +9,6 @@ interface AddProfessionalFormProps {
 export function AddProfessionalForm({ onAdded }: AddProfessionalFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [tier, setTier] = useState<ProfessionalTier>("general");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +21,7 @@ export function AddProfessionalForm({ onAdded }: AddProfessionalFormProps) {
       const res = await fetch("/api/admin/professionals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, tier })
+        body: JSON.stringify({ name, email })
       });
 
       const payload = await res.json().catch(() => null) as { error?: string } | null;
@@ -35,7 +33,6 @@ export function AddProfessionalForm({ onAdded }: AddProfessionalFormProps) {
 
       setName("");
       setEmail("");
-      setTier("general");
       onAdded();
     } finally {
       setLoading(false);
@@ -46,7 +43,7 @@ export function AddProfessionalForm({ onAdded }: AddProfessionalFormProps) {
     <form onSubmit={handleSubmit} className="rounded-md border bg-white p-4">
       <h3 className="mb-4 text-sm font-semibold">Add professional</h3>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1.5">
           <span className="text-xs font-medium">Name</span>
           <input
@@ -67,18 +64,6 @@ export function AddProfessionalForm({ onAdded }: AddProfessionalFormProps) {
             required
             className="rounded-md border px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
           />
-        </label>
-
-        <label className="grid gap-1.5">
-          <span className="text-xs font-medium">Tier</span>
-          <select
-            value={tier}
-            onChange={(e) => setTier(e.target.value as ProfessionalTier)}
-            className="rounded-md border bg-white px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-          >
-            <option value="general">General</option>
-            <option value="in_depth">In-depth</option>
-          </select>
         </label>
       </div>
 

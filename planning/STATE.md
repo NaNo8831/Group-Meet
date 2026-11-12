@@ -1,7 +1,7 @@
 # Group Meet — Project State
 
-**Last Updated:** 2026-11-06 — Sprint 007 complete: Stabilize and Align
-**Status:** SPRINT 007 COMPLETE — the 120x method files, the Architect Pack history, and every planning document are committed and describe one product: the domain workflow with admin-defined meeting types (Decisions 047 to 056). The road is in `planning/ROADMAP.md` (about 9 sprints, 007 to 015). Next: Sprint 008, meeting types, roles, and pools. No application code changed in Sprint 007.
+**Last Updated:** 2026-11-12 — Sprint 008 complete: Meeting Types, Roles, and Pools
+**Status:** SPRINT 008 COMPLETE — admins can create meeting types with named durations, roles with required counts, and pools of professionals. Migration 008 is applied to the live database and `professionals` is now server-only. Branch `sprint-008-meeting-types` holds the work locally (not pushed). Next: Sprint 009, client request on the new tables with a link per meeting type. Known gap: no admin password reset (R-015).
 
 ## What Exists
 - GitHub repo: https://github.com/NaNo8831/Group-Meet
@@ -37,8 +37,22 @@
 - Architect Pack `.md` files are tracked in git (`.gitignore` ignores only non-Markdown files in `planning/architect-packs/`)
 - `docs/ARCHITECT_BRIEFING_SPEC.md` — describes the briefing shape
 - `docs/DATA_MODEL.md` has a "Planned changes (Sprint 008)" section for the admin-defined meeting type model
+- Meeting type workspace at `/admin/meeting-types` (list, create, editor with durations, roles, thresholds, and pool); API under `/api/admin/meeting-types/**`; `lib/meeting-types.ts`
+- Migration `supabase/migrations/008_meeting_types.sql` (applied), with preflight, post-check, and rollback SQL under `supabase/`
+- Roster page and API no longer show or write tier (Decision 058)
+- Admin header links: Meeting types, Professionals
 
 ## Recently Completed
+
+### Sprint 008 — Meeting Types, Roles, and Pools
+
+Completed:
+- Stage A: preflight, migration, post-check, and rollback SQL; `lib/meeting-types.ts`; seven admin API routes; roster API and types lose tier. Operator ran the preflight, applied the migration twice, and ran the post-check.
+- Stage B: admin nav links, meeting type list, create page, and editor (details, status toggle, thresholds, durations, roles, pool); roster components lose tier controls.
+- Live database: five new tables, two seeded inactive meeting types, `requests` has nullable `meeting_type_id`, `duration_id`, `created_by_admin_id`; open policies removed from `professionals`.
+- Decisions 057 to 063 recorded; R-013 resolved, R-014 mitigated, R-015 added.
+
+Validation: `npx tsc --noEmit` and `npm run build` pass; signed-out requests are redirected or refused; operator post-check and walkthrough passed. No automated tests exist.
 
 ### Sprint 007 — Stabilize and Align
 
@@ -51,50 +65,15 @@ Completed:
 
 Validation: `npx tsc --noEmit` clean; `npm run build` passed (12 routes). No application code changed.
 
-### Sprint 006 Follow-up — Legacy Field Ripple Fixes
-
-Completed:
-- `lib/types.ts` `Meeting` now carries `client_name`, `client_email`, `meeting_type`; legacy `participant_*`/`topic` are optional
-- `lib/format.ts` adds `clientName`, `clientEmail`, `meetingTitle` helpers (fall back to legacy fields on pre-Sprint 004 rows)
-- Participant status page, team voting page, and all three email helpers now use the new fields
-- Participant confirmation email is skipped with a logged error if no client email exists
-- Migration `007_relax_legacy_meeting_columns.sql` applied by the operator to the live DB
-
-Validation: `npx tsc --noEmit` clean; `npm run build` passed (12 routes). Not yet validated against live Supabase/Resend.
-
-### Sprint 006 — Admin Authentication
-
-Completed:
-- `@supabase/ssr` installed; `lib/supabase-server.ts` and `lib/supabase-client.ts` created
-- `proxy.ts` (Next.js 16 proxy file, replaces middleware.ts) protects `/admin/*` and `/api/admin/*`
-- Unauthenticated `/admin/*` requests redirect to `/admin/login`; unauthenticated `/api/admin/*` requests return 401
-- `app/admin/login/page.tsx` — clean email/password login form with inline error display
-- `app/admin/(protected)/layout.tsx` — Server Component layout with email display and Sign out
-- `app/admin/(protected)/AdminNav.tsx` — Client Component sign-out button
-- `lib/auth.ts` — `getAuthenticatedAdmin()`, `getAuthenticatedAdminFromRequest()`, `isSuperAdmin()` helpers
-- Role read fresh from `admins` table on every request; JWT role not trusted
-- Admin role sync: matches by `auth_user_id`, falls back to email for bootstrap; backfills `auth_user_id` on first match
-- Deactivated admins (`is_active = false`) denied with 403
-- `/api/admin/me` endpoint for post-login admin verification
-- All Sprint 005 TODO auth comments replaced with real auth checks in all three admin API routes
-- `supabase/migrations/006_admin_auth.sql` — adds `auth_user_id uuid` to `admins`, unique index, RLS policies
-- `docs/ADMIN_SETUP.md` — first Super Admin bootstrap instructions
-
-Validation:
-- `npx tsc --noEmit` — clean (no errors)
-- `npm run build` — passed, 12 routes listed, no warnings
-
-Note: Next.js 16 renamed `middleware.ts` → `proxy.ts` with export renamed from `middleware` to `proxy`.
-
-Older history (Sprint 005 and earlier): `planning/archive/STATE-through-sprint-005.md`.
+Older history: `planning/archive/STATE-through-sprint-005.md` and `planning/archive/STATE-sprint-006.md`.
 
 ## Next Actions
 
-- Sprint 008: meeting types, roles, and pools (new tables, admin workspace; guarded — includes a migration)
-- Operator: move the installer `planning/architect-packs/CursorUserSetup-x64-3.7.12.exe` out of the repo folder
-- Operator: confirm which migrations (`005`, `006`) and the Super Admin bootstrap are applied in live Supabase (Q-006)
-- Operator: start Resend sending-domain verification (DNS through Google Workspace) so Sprint 010 can send real email
-- Push `chore/sprint-007-stabilize` and open a pull request when ready (not done in this sprint)
+- Sprint 009: client request on the new tables, a link per meeting type (`/meet/<slug>`), and the home page list of active types (guarded if it changes data)
+- Architect: plan an admin password reset sprint before the beta (R-015, Q-012)
+- Architect: decide the development email safeguard and test inboxes with Sprint 010 (Q-011)
+- Operator: push `sprint-008-meeting-types` and open a pull request when ready; start Resend sending-domain verification; move the installer out of `planning/architect-packs/`
+- Operator: remove or leave inactive the walkthrough test meeting type and test professionals
 
 ## Blockers
 
