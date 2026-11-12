@@ -3,14 +3,9 @@ import { z } from "zod";
 import { createServiceSupabaseClient } from "@/lib/supabase";
 import { getAuthenticatedAdminFromRequest } from "@/lib/auth";
 
-const updateSchema = z
-  .object({
-    tier: z.enum(["in_depth", "general"]).optional(),
-    is_active: z.boolean().optional()
-  })
-  .refine((data) => data.tier !== undefined || data.is_active !== undefined, {
-    message: "At least one of tier or is_active is required"
-  });
+const updateSchema = z.object({
+  is_active: z.boolean({ required_error: "is_active is required" })
+});
 
 export async function PATCH(
   request: NextRequest,

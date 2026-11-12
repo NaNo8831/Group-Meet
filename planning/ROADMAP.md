@@ -3,7 +3,7 @@
 > A living estimate, not a contract. Sprints get added, split, re-ordered, or dropped as the work teaches us. The Architect updates this file at every session and shows the change in git; the Builder marks a row `done` when that sprint closes.
 
 **About:** 9 sprints on the road
-**Last estimated:** 2026-11-06
+**Last estimated:** 2026-11-12
 **Completed before this roadmap existed:** sprints 001-006 (the record lives in `planning/sprints/` and `planning/STATE.md`)
 
 | # | Sprint | Phase | Status | Why it matters |
@@ -23,5 +23,7 @@
 - Email (010) comes early on purpose: it is the biggest unknown and sprints 011 to 015 depend on it. The Resend domain DNS work is the operator's, in Google Workspace.
 - Guarded sprints (the person approves the build plan first): 008 (migration), 010 (sends real email), 011 (personal data, tokens), 012 (permissions), 014 (migration, deletes legacy access). 009, 013 and 015 are guarded if they add migrations.
 - Every sprint from 008 on must name the tables each page reads and writes, and name any migration it needs, in its blueprint (Plan correction from Sprints 004 to 006).
+- Sprint 008 runs in two operator-gated stages: A (preflight, migration, admin API) ends with the operator applying the migration and running a post-check; B (admin screens) ends with the operator walking through them. It also removes the tier toggle from the roster page and locks the professionals table to the server only.
+- The public link for a meeting type is `/meet/<slug>`, built in Sprint 009 (planned Decision 060).
 - Admin-created requests on a client's behalf are deferred, not dropped. Keep the data model flexible for them (Decision 053).
 - Sprint 009 may split if the date/time picker needs rework on the new duration model.

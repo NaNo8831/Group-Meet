@@ -7,7 +7,7 @@ interface ProfessionalTableProps {
   onUpdated: () => void;
 }
 
-async function patchProfessional(id: string, patch: { tier?: string; is_active?: boolean }) {
+async function patchProfessional(id: string, patch: { is_active: boolean }) {
   const res = await fetch(`/api/admin/professionals/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -28,12 +28,6 @@ export function ProfessionalTable({ professionals, onUpdated }: ProfessionalTabl
     );
   }
 
-  async function handleTierToggle(pro: Professional) {
-    const newTier = pro.tier === "in_depth" ? "general" : "in_depth";
-    await patchProfessional(pro.id, { tier: newTier });
-    onUpdated();
-  }
-
   async function handleStatusToggle(pro: Professional) {
     await patchProfessional(pro.id, { is_active: !pro.is_active });
     onUpdated();
@@ -46,7 +40,6 @@ export function ProfessionalTable({ professionals, onUpdated }: ProfessionalTabl
           <tr className="border-b text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Email</th>
-            <th className="px-4 py-3">Tier</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Actions</th>
           </tr>
@@ -59,16 +52,6 @@ export function ProfessionalTable({ professionals, onUpdated }: ProfessionalTabl
             >
               <td className="px-4 py-3 font-medium">{pro.name}</td>
               <td className="px-4 py-3 text-muted-foreground">{pro.email}</td>
-              <td className="px-4 py-3">
-                <button
-                  type="button"
-                  onClick={() => handleTierToggle(pro)}
-                  className="rounded-md border px-2 py-1 text-xs font-medium transition hover:bg-muted"
-                  title="Toggle tier"
-                >
-                  {pro.tier === "in_depth" ? "In-depth" : "General"}
-                </button>
-              </td>
               <td className="px-4 py-3">
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   const existingEmails = new Set((existingRows ?? []).map((r: { email: string }) => r.email.toLowerCase()));
 
-  const toInsert: { name: string; email: string; tier: string; is_active: boolean }[] = [];
+  const toInsert: { name: string; email: string; is_active: boolean }[] = [];
   const errors: string[] = [];
   let skipped = 0;
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     existingEmails.add(row.email.toLowerCase());
-    toInsert.push({ name: row.name, email: row.email, tier: "general", is_active: true });
+    toInsert.push({ name: row.name, email: row.email, is_active: true });
   }
 
   let imported = 0;
