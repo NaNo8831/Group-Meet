@@ -12,6 +12,8 @@ The operator decided to stay on Supabase through Sprint 013 and then move to Neo
 
 Old code (Sprints 005 to 008) is left as it is and is ported during Sprints 017 and 018.
 
+**Amendment 2 (2026-11-19, operator request during the Stage B walkthrough):** a meeting can only be requested at least **48 hours ahead**. A proposed start earlier than 48 hours from now is refused by the server and greyed out in the picker, replacing the earlier "strictly in the future" rule. The rule lives in one place (`MIN_HOURS_AHEAD` in `lib/slot-rules.ts`) and the picker reads it from there. `MonthCalendar.tsx` is still not edited; a day with no allowed time left cannot be picked and shows a short notice.
+
 ## Why
 
 Sprint 008 let admins build meeting types. Clients still use the old form, which saves to the old tables with two hard-coded types. This sprint gives each active meeting type its own public link. A client opens `/meet/<slug>`, reads the landing text, picks one of that meeting type's named lengths, proposes times, and the request is saved on the new tables (`requests` and `slots`). No email is sent and no professional is notified yet (Sprints 010 and 011). A small read-only admin Requests page makes the submissions visible.
@@ -38,7 +40,7 @@ Sprint 008 let admins build meeting types. Clients still use the old form, which
 - The client sends name, email, the chosen duration option, and proposed start times. The client never sends end times; the server never trusts any (Decision 049). A slot stores only its start.
 - A meeting type with a single duration skips the choice step; the one length is used automatically.
 - Slot rules, checked on the server in the business time zone (the `business_timezone` value in `platform_settings`, default US/Eastern, passed to the picker so both sides agree):
-  - each start is strictly in the future and no later than 29 days from now;
+  - each start is at least 48 hours from now (Amendment 2) and no later than 29 days from now;
   - each start is on a 15-minute mark between 07:00 and 21:00 inclusive (21:00 only on the hour);
   - at least 1 and at most 30 slots, with no duplicate starts;
   - any two starts are at least (chosen minutes + 15) minutes apart.
@@ -55,7 +57,7 @@ Sprint 008 let admins build meeting types. Clients still use the old form, which
 |---|---|---|---|
 | 064 | `/` is the list of active meeting types and each type is requested at `/meet/<slug>`. The old public form entrance is removed; the old API and pages stay until Sprint 014. | Implements Decisions 055 and 060. | `app/page.tsx` is replaced. Legacy routes remain reachable by URL only. |
 | 065 | The public request endpoint is `POST /api/meet/[slug]/requests`. The server derives each slot's end from the chosen duration; slots store only the start. Client emails are stored trimmed and lowercase. | Decision 049; the browser is not trusted for times. | The request body carries `duration_id` and `starts_at` values only. |
-| 066 | Server slot rules: strictly in the future, at most 29 days ahead, on a 15-minute mark from 07:00 to 21:00 in the business time zone, 1 to 30 slots, unique starts, and any two starts at least duration plus 15 minutes apart. | Mirrors the picker's rules so the server is the real guard. | Rules live in `lib/slot-rules.ts` as pure functions. |
+| 066 | Server slot rules: at least 48 hours ahead (amended 2026-11-19), at most 29 days ahead, on a 15-minute mark from 07:00 to 21:00 in the business time zone, 1 to 30 slots, unique starts, and any two starts at least duration plus 15 minutes apart. | Mirrors the picker's rules so the server is the real guard. | Rules live in `lib/slot-rules.ts` as pure functions. |
 | 067 | Spam controls for the public form are a hidden trap field and a 30-slot cap. No CAPTCHA until abuse appears. Duplicate requests are accepted. | Keeps the form simple and dependency-free. | R-016 tracks the unthrottled public endpoint. |
 | 068 | The admin Requests page in Sprint 009 is read-only. Actions (pairing, re-notify) arrive in Sprint 012. | Makes submissions visible without building the dashboard early. | `GET /api/admin/requests` only. |
 | 069 | The business time zone is read from `platform_settings` (key `business_timezone`, default US/Eastern) by the server and passed to the picker. The hard-coded zone constant is removed. | One source of truth (Decisions 027, 028, 035). | Sprint 015's settings page can change it without code edits to the picker. |

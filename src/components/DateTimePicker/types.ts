@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
+import { MIN_HOURS_AHEAD } from "@/lib/slot-rules";
 
 // A length the client can choose, defined by an admin on the meeting type.
 export interface DurationOption {
@@ -27,10 +28,16 @@ export function toApiSlots(slots: TimeSlot[], timeZone: string): ApiSlot[] {
   }));
 }
 
-/** True when this date and time, in the business time zone, has already passed. */
-export function isPastTime(date: string, startTime: string, timeZone: string, now: Date = new Date()): boolean {
-  return fromZonedTime(`${date}T${startTime}:00`, timeZone).getTime() <= now.getTime();
+/**
+ * True when this date and time, in the business time zone, is less than the minimum notice from now
+ * (48 hours; the same rule the server enforces). Covers times already in the past too.
+ */
+export function isTooSoon(date: string, startTime: string, timeZone: string, now: Date = new Date()): boolean {
+  const earliest = now.getTime() + MIN_HOURS_AHEAD * 60 * 60 * 1000;
+  return fromZonedTime(`${date}T${startTime}:00`, timeZone).getTime() < earliest;
 }
+
+export { MIN_HOURS_AHEAD };
 
 export function formatTimeLabel(value: string) {
   const date = new Date(`2000-01-01T${value}:00`);

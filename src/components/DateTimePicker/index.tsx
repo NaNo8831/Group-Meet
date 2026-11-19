@@ -7,7 +7,8 @@ import { TimeSlotEditor } from "./TimeSlotEditor";
 import {
   DEFAULT_START_TIME,
   getTimeOptions,
-  isPastTime,
+  isTooSoon,
+  MIN_HOURS_AHEAD,
   toApiSlots,
   type ApiSlot,
   type DurationOption,
@@ -54,6 +55,7 @@ export function DateTimePicker({ durations, timeZone, onChange }: DateTimePicker
   const [durationId, setDurationId] = useState<string | null>(durations.length === 1 ? durations[0].id : null);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const duration = durations.find((option) => option.id === durationId) ?? null;
 
@@ -64,8 +66,8 @@ export function DateTimePicker({ durations, timeZone, onChange }: DateTimePicker
   }, [apiSlots, durationId, onChange]);
 
   function firstFutureStartTime(date: string) {
-    if (!isPastTime(date, DEFAULT_START_TIME, timeZone)) return DEFAULT_START_TIME;
-    return timeOptions.find((option) => !isPastTime(date, option, timeZone));
+    if (!isTooSoon(date, DEFAULT_START_TIME, timeZone)) return DEFAULT_START_TIME;
+    return timeOptions.find((option) => !isTooSoon(date, option, timeZone));
   }
 
   function chooseDuration(id: string) {
@@ -75,15 +77,20 @@ export function DateTimePicker({ durations, timeZone, onChange }: DateTimePicker
   }
 
   function toggleDate(date: string) {
+    setNotice(null);
+
     if (selectedDates.includes(date)) {
       setSelectedDates((current) => current.filter((selectedDate) => selectedDate !== date));
       setSlots((current) => current.filter((slot) => slot.date !== date));
       return;
     }
 
-    // A day with no start time left (for example today after 9 PM) cannot be picked.
+    // A day with no start time far enough ahead cannot be picked.
     const startTime = firstFutureStartTime(date);
-    if (!startTime) return;
+    if (!startTime) {
+      setNotice(`Meetings can only be requested at least ${MIN_HOURS_AHEAD} hours ahead. Choose a later date.`);
+      return;
+    }
 
     setSelectedDates((current) => [...current, date].sort());
     setSlots((current) => [...current, { date, startTime }]);
@@ -114,6 +121,12 @@ export function DateTimePicker({ durations, timeZone, onChange }: DateTimePicker
       {duration ? (
         <div className="grid gap-3">
           <h3 className="text-sm font-semibold">Proposed times</h3>
+          <p className="text-xs text-muted-foreground">
+            Requests need at least {MIN_HOURS_AHEAD} hours notice. Earlier times are greyed out.
+          </p>
+          {notice ? (
+            <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">{notice}</p>
+          ) : null}
           <div className="flex flex-col gap-4 md:flex-row md:items-start">
             <div className="md:w-[19rem] md:shrink-0">
               <MonthCalendar selectedDates={selectedDates} onToggleDate={toggleDate} />

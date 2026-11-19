@@ -6,6 +6,7 @@ import { formatInTimeZone } from "date-fns-tz";
 // the time zone database and never by a fixed offset.
 
 export const MAX_SLOTS = 30;
+export const MIN_HOURS_AHEAD = 48;
 export const MAX_DAYS_AHEAD = 29;
 export const GRID_MINUTES = 15;
 export const EARLIEST_MINUTE_OF_DAY = 7 * 60; // 07:00
@@ -45,6 +46,7 @@ export function validateSlots({ startsAt, minutes, now, timeZone }: ValidateSlot
     return fail(`Choose no more than ${MAX_SLOTS} times.`);
   }
 
+  const earliest = now.getTime() + MIN_HOURS_AHEAD * 60 * 60 * 1000;
   const latest = now.getTime() + MAX_DAYS_AHEAD * 24 * 60 * 60 * 1000;
   const starts: number[] = [];
 
@@ -55,8 +57,8 @@ export function validateSlots({ startsAt, minutes, now, timeZone }: ValidateSlot
     if (Number.isNaN(time)) {
       return fail("One of the times is not a valid date and time.");
     }
-    if (time <= now.getTime()) {
-      return fail("Choose times in the future.");
+    if (time < earliest) {
+      return fail(`Meetings can only be requested at least ${MIN_HOURS_AHEAD} hours ahead. Choose a later time.`);
     }
     if (time > latest) {
       return fail(`Choose times within the next ${MAX_DAYS_AHEAD} days.`);

@@ -7,7 +7,7 @@ import {
   DEFAULT_START_TIME,
   formatTimeLabel,
   getTimeOptions,
-  isPastTime,
+  isTooSoon,
   type TimeSlot
 } from "./types";
 
@@ -150,9 +150,9 @@ export function TimeSlotEditor({
     });
   }
 
-  // Times that have already passed today are greyed out (the server also refuses them).
+  // Times less than 48 hours away (including any already past) are greyed out; the server also refuses them.
   function isOptionPast(date: string, option: string) {
-    return isPastTime(date, option, timeZone);
+    return isTooSoon(date, option, timeZone);
   }
 
   function firstAvailableTime(date: string) {
@@ -264,7 +264,7 @@ export function TimeSlotEditor({
                               className={past ? "text-gray-400" : undefined}
                             >
                               {formatTimeLabel(option)}
-                              {past ? " (past)" : ""}
+                              {past ? " (too soon)" : ""}
                             </option>
                           );
                         })}

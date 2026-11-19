@@ -59,7 +59,7 @@ Select-only, labeled: the two columns are NOT NULL; the composite foreign key ex
 
 ### A5. `lib/slot-rules.ts` (pure, no Next or Supabase imports; may import `date-fns-tz`)
 
-Exports `validateSlots({ startsAt: string[], minutes: number, now: Date, timeZone: string })` returning `{ ok: true }` or `{ ok: false, message }` with plain messages, and constants for the rules (max 30, max 29 days ahead, grid 15, hours 07:00 to 21:00, buffer 15). Rules exactly as in the requirements. Evaluate local time with `toZonedTime` (or `formatInTimeZone`) in the supplied zone so daylight saving is handled by the zone database, never by a fixed offset.
+Exports `validateSlots({ startsAt: string[], minutes: number, now: Date, timeZone: string })` returning `{ ok: true }` or `{ ok: false, message }` with plain messages, and constants for the rules (max 30, max 29 days ahead, grid 15, hours 07:00 to 21:00, buffer 15). Rules exactly as in the requirements (including Amendment 2: at least 48 hours ahead, via the `MIN_HOURS_AHEAD` constant that the picker also reads). Evaluate local time with `toZonedTime` (or `formatInTimeZone`) in the supplied zone so daylight saving is handled by the zone database, never by a fixed offset.
 
 ### A6. `lib/requests.ts` (pure) and `lib/db/requests.ts` (data access)
 
