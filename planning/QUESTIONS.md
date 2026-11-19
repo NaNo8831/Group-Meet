@@ -1,6 +1,6 @@
 # Group Meet — Open Questions
 
-**Last updated:** 2026-11-12 (Sprint 008)
+**Last updated:** 2026-11-19 (Sprint 009)
 
 ## Q-001: What happens if the threshold is never reached?
 **Status:** Superseded by the domain workflow
@@ -56,3 +56,13 @@
 **Status:** Open — for the next Architect session
 **Context:** No "Forgot password" link or reset page exists (R-015). Recommendation: a small guarded sprint before the beta.
 **Decision needed:** Add it as its own sprint, or fold it into Sprint 015.
+
+## Q-014: Confirm the move to Neon, and choose the login approach
+**Status:** Open — decision point when Sprint 013 closes
+**Context:** The road assumes Sprints 017 (database and data layer) and 018 (admin login) move the app to Neon. Neon is Postgres only, so admin login needs a replacement (a standard library such as Auth.js, or Neon's own auth product, to be verified at the time). Supabase's free plan pauses an idle project, restored by hand meanwhile (R-017).
+**Decision needed:** Go or no-go on the move, the login approach, and the Neon region.
+
+## Q-013: Should the client get an acknowledgement email?
+**Status:** Open — decide when planning Sprint 010
+**Context:** After submitting, the client sees a "request received" screen only. `DOMAIN.md`'s eight templates do not include an acknowledgement email. Sprint 009 sends no email at all.
+**Decision needed:** Add a "we received your request" email (a ninth template), or keep the on-screen confirmation only.

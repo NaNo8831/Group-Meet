@@ -3,95 +3,93 @@
 > Bounded current-state snapshot. The Builder refreshes this at every sprint close; the Architect reads it first at every sprint start. Not a log. No source code, secrets, or credentials. See `docs/ARCHITECT_BRIEFING_SPEC.md`.
 
 **Project:** Group Meet
-**Sprint just completed:** Sprint 008 — Meeting Types, Roles, and Pools
-**Last updated:** 2026-11-12
+**Sprint just completed:** Sprint 009 — Client Request on the New Tables
+**Last updated:** 2026-11-19
 
 ## Where things stand
 
-An admin can now build a meeting type from scratch: a title and link, named lengths like Short 30 or Long 60, the roles each meeting needs and how many people for each, and a pool of professionals who can fill them. It works end to end for the admin side, and the live database has the new tables and is locked down so only the server can reach professionals' contact details. Clients still cannot use any of it yet, so the next step is Sprint 009: the public link where a client picks a length and proposes times. One real gap showed up: there is no way to reset an admin password.
+A client can now open the link for a meeting type, pick one of its lengths, propose times, and send the request, and it shows up for admins on a new Requests page. The server checks every time (at least two full days ahead, on the quarter hour, within hours, spaced apart), and your walkthrough with a real request passed. Nothing is emailed yet, so no professional knows about a request. Next is Sprint 010, which makes email real. One practical note: the Supabase project paused itself after a week of quiet and had to be restored by hand, which is why a move to Neon is planned after Sprint 013.
 
 ## Executive summary
 
 - **Business outcome:** Lets outside clients request a meeting with a team and books it once every required role has someone available and an admin approves.
-- **Current focus:** Moving the beta onto the domain workflow, now with admin-defined meeting types in place and the client-facing side next.
-- **What is proven:** An admin can sign in, manage the professional roster, and create and configure meeting types with durations, roles, and pools. The live database accepted the migration twice with no error, the post-check passed, and professionals' data is no longer reachable with the public key.
-- **What is not live:** Clients cannot request through a meeting type (no public link yet), no email goes through the new model, professionals have no response page, there is no threshold or pairing, and there is no admin password reset. The old meetings flow still runs the real client form.
+- **Current focus:** Building the booking workflow on the domain model, now with the client side live and email next.
+- **What is proven:** An admin can build meeting types; a client can open a type's link, choose a length, propose valid times, and submit; the request is saved correctly on the new tables and appears in the admin Requests list; the server refuses bad or tampered times; the database ties a request's length to its meeting type and keeps client data server-only.
+- **What is not live:** No email goes out (no acknowledgement, no notice to professionals, no confirmation); professionals have no response page; there is no threshold, pairing, or client confirmation; there is no admin password reset; the database host (Supabase free plan) pauses when idle. The old meetings flow remains in the code but is not linked from any page.
 
 ## Current status
 
-Phase: pre-beta, stage 2 of 9 on the road. Branch `sprint-008-meeting-types` holds four local commits on top of `main` (not pushed, no pull request). The live database has migration 008 applied. The two seeded meeting types and any walkthrough test data are inactive or test-only.
+Phase: pre-beta, 3 of about 12 road sprints done (007, 008, 009). Branch `sprint-009-client-request` holds the Sprint 009 commits on top of `main` (not pushed, no pull request). The live database has migrations 005 to 009. The walkthrough left at least one test request and an active test meeting type in the live database.
 
 ## Since last sprint
 
-- Migration 008 applied: five new tables, two seeded inactive meeting types, nullable links on `requests`, server-only access on the new tables and on `professionals`.
-- Admin API (seven route files) and admin screens (list, create, editor with durations, roles, thresholds, pool) built and walked through by the operator.
-- Roster: tier toggle, column, and field removed; the database column remains until Sprint 014.
-- Docs updated: DECISIONS 057 to 063, RISKS R-013 to R-015, QUESTIONS Q-006 and Q-008 resolved and Q-011 and Q-012 added, DATA_MODEL, ARCHITECTURE, API, VALIDATION. Sprint 006 history archived.
+- Migration 009 applied: required request links, a composite key tying a length to its meeting type, unique slot starts, server-only access on `requests` and `slots`.
+- Public pages (`/`, `/meet/[slug]`, not-found), request API, request form with hidden trap field, and the picker rebuilt on the meeting type's lengths and the business time zone.
+- Admin Requests page and nav link (read-only).
+- Operator changes during the walkthrough: past times greyed out, then a two-full-calendar-days notice rule counted from midnight in the business time zone, with one small `minDate` prop added to `MonthCalendar`.
+- Roadmap amended earlier this sprint: about 12 sprints, with Neon move sprints 017 and 018 after 013 and password reset (016) after them.
 
 ## Architecture / file map
 
-- `lib/meeting-types.ts`: types, validation, slug, readiness, database error mapping.
-- `app/api/admin/meeting-types/**`: seven routes. `app/admin/(protected)/meeting-types/**`: list, new, editor. `src/components/MeetingTypes/`: the screens' components.
-- `supabase/migrations/008_meeting_types.sql` with `supabase/preflight/008_preflight.sql`, `008_postcheck.sql`, and `supabase/rollbacks/008_meeting_types_rollback.sql`.
-- Tables used by the new code: `meeting_types`, `meeting_type_durations`, `meeting_type_roles`, `meeting_type_pool`, `meeting_type_pool_roles`, and `professionals` (read). None of it touches the legacy tables. Full map in `docs/ARCHITECTURE.md`.
+- `lib/slot-rules.ts` (pure rules, shared with the picker), `lib/requests.ts` (validation), `lib/db/requests.ts` (the only new data access; plain functions, no Supabase types exposed).
+- `app/api/meet/[slug]/requests/route.ts` (public), `app/api/admin/requests/route.ts`, `app/page.tsx`, `app/meet/[slug]/`, `app/admin/(protected)/requests/`.
+- `src/components/MeetingRequest/`, `src/components/Requests/`, `src/components/DateTimePicker/` (picker driven by durations and time zone).
+- `supabase/migrations/009_requests_new_model.sql` with preflight, post-check, and rollback SQL.
+- Tables used by the new code: `meeting_types`, `meeting_type_durations`, `platform_settings`, `requests`, `slots`. None of the legacy tables or `professionals` are touched. Full map in `docs/ARCHITECTURE.md`.
 
 ## Decisions
 
-057 to 063 in `planning/DECISIONS.md`: no default minimum responses, tier removed from the roster, free-text roles and durations with inactive-by-default and an activation rule, public link at `/meet/<slug>`, server-only access for the new tables, seeded pools derived from tier once, snake_case admin API.
+064 to 072 in `planning/DECISIONS.md`: `/` lists active types and requests live at `/meet/<slug>`; server derives end times; slot rules (amended to two full calendar days notice); trap field and slot cap instead of CAPTCHA; admin Requests read-only; time zone from platform settings; required links, composite key, server-only tables; three portability rules; stay on Supabase through Sprint 013 with a planned Neon move.
 
 ## Risks / watch-items
 
-- R-015 (new): no admin password reset; a lockout of the only Super Admin is possible. Passwords are set in the Supabase dashboard for now.
-- R-008: Resend sending domain not verified, so email reaches only the account owner.
-- R-007 and R-009: legacy flow and its permissive access rules remain until Sprint 014. `requests` and `admins` keep a Phase 1 policy tied to the public role but limited by a condition.
-- R-011: no automated tests. R-006 and R-012: `npm audit` advisories unreviewed.
-- Walkthrough test data (a test meeting type and three test professionals with fake emails) may still be in the live database.
+- R-017 (new): Supabase's free plan pauses an idle project; the public pages then show a "could not load" message until the operator restores it.
+- R-016 (new): the public request endpoint is unthrottled; matters once Sprint 011 emails professionals.
+- R-015: no admin password reset. R-008: email delivery unproven until Sprint 010. R-011: no automated tests. R-006 and R-012: `npm audit` advisories unreviewed. R-007 and R-009: legacy flow and its open access rules until Sprint 014.
+- Walkthrough test data (a test meeting type, test professionals, and at least one test request) is still in the live database.
 
 ## Open questions for the Architect
 
-- Q-012: where password reset goes on the road (recommended: its own small guarded sprint before the beta).
-- Q-011: a development email setting that redirects all outgoing mail to one inbox, and the test inboxes for the beta check (plus-addressing once the domain is verified).
-- Q-005 branding, Q-007 which email templates the beta needs, Q-009 beta size, Q-010 legacy `team_members` data, Q-002 calendar format.
+- Q-013: should the client get an acknowledgement email (a ninth template)?
+- Q-011: the development email redirect setting and the 4 to 5 test inboxes.
+- Q-007: which of the eight templates the beta needs. Q-014: confirm the Neon move at Sprint 013. Q-012 is answered by the amended road (016 after the move). Q-005, Q-009, Q-010, Q-002 unchanged.
 
 ## Validation / test status
 
 **Tests:** 0 passing, 0 failing.
 
-No automated test suite exists. Typecheck and build pass. The operator ran the preflight, the migration twice, and the post-check in Supabase, and walked through the admin screens. The pool-seeding rule was not exercised because the roster was empty when the migration ran.
+No automated test suite exists. Typecheck and build pass. The slot rules were run on their own with a fixed "now" (29 cases, all pass), but that was a one-off run, not a saved test. The operator ran the preflight, migration 009 twice, and the post-check in Supabase, and passed a walkthrough that included a real submission. A failed slots insert (the clean-up of the request) was never triggered.
 
 ## Readiness signals
 
 | Signal | Status | Detail |
 | --- | --- | --- |
-| Application tests | attention | No automated tests exist; typecheck and build pass and the operator walked through the screens. |
-| Live submission | attention | A real client request has not been run through the new model; that arrives in Sprint 009. |
-| Email delivery | attention | Resend sending domain is not verified; email reaches only the account owner. |
-| Admin access recovery | attention | No password reset page; a lost password must be fixed in the Supabase dashboard. |
+| Application tests | attention | No automated tests exist; the slot rules were checked by a one-off run and the screens by the operator's walkthrough. |
+| Live submission | passed | A real request went through `/meet/<slug>` on the live database and appeared on the admin Requests page with correct times. |
+| Email delivery | attention | The app has sent no email yet; the Resend domain is reported verified but unproven until Sprint 010. |
+| Hosting stability | attention | Supabase's free plan paused the project after a week of quiet; a move to Neon is planned (Sprints 017 and 018, confirmed at 013). |
 
 ## Evidence
 
-- `npx tsc --noEmit`: exit 0, no output.
-- `npm run build`: exit 0; the route list includes `/admin/meeting-types`, `/admin/meeting-types/new`, `/admin/meeting-types/[id]`, and seven `/api/admin/meeting-types…` routes.
-- Dev server smoke test while signed out (port 3107, then stopped): the three admin pages returned 307 to `/admin/login`; the API returned 401 for GET, POST, PATCH, PUT, and DELETE.
-- `grep -rn "tier" app/api/admin/professionals src/components/ProfessionalRoster`: no output.
-- `grep -inE "drop table|delete from|truncate"` on the migration: no output. Write-statement grep on the preflight: no output.
-- `git diff --stat main..HEAD` for the legacy flow, date/time picker, and `package.json`: no output. All other changed paths are within the sprint's `owns` list.
-- Slug example: `slugify("In-Depth Intro, Part 2!")` returned `in-depth-intro-part-2`.
-- Operator-run in the Supabase SQL editor (reported by the operator): preflight results reviewed; migration applied twice; post-check showed five tables with row security on, only `service_role` policies, no non-server policy on `professionals`, two seeded types with the expected durations and roles, nullable request columns, and the foreign key that blocks a role from another meeting type. A read-only check of `admins` and the Auth user (run by the Builder with the project keys) showed the email matches exactly.
+- `npx tsc --noEmit`: exit 0. `npm run build`: exit 0; route list includes `/meet/[slug]`, `/admin/requests`, `/api/meet/[slug]/requests`, `/api/admin/requests`, and the legacy routes.
+- Slot rules, run on their own with `node --experimental-strip-types` and a fixed "now": 29 of 29 cases pass. Notable cases: 45-minute length, 09:00 with 09:45 refused and 09:00 with 10:00 accepted; 75-minute length, 10:00 with 11:15 refused and 11:30 accepted; today and tomorrow refused and the day after tomorrow accepted; a late-evening "now" where a 48-hour clock rule would refuse but the calendar-day rule accepts; a case across the March daylight saving change; 07:00 and 06:00 in daylight and standard time; 30 days ahead and 31 times refused; the `US/Eastern` alias accepted.
+- Dev server, rejection-only (nothing written): invalid JSON, missing or bad fields, and no times returned 400; an unknown link and the switched-off seeded link returned 404 (which also proved the database was reachable); a filled trap field returned 200 without a write; `GET /api/admin/requests` returned 401 signed out; `/` returned 200; `/meet/<unknown>` returned 404; `/admin/requests` redirected to login.
+- Greps: no old type names or hour-based rule in the picker, home page, or `/meet`; only `lib/db/` imports the Supabase client in the new code; no `ends_at` in new server code; no `drop table`, `delete from`, or `truncate` in migration 009; no writes in the preflight; no changes to the legacy routes, `lib/validation.ts`, `lib/email.ts`, or `package.json`.
+- Operator-run (reported by the operator): preflight reviewed; migration 009 applied twice; post-check showed `meeting_type_id` and `duration_id` required, the composite key present and the single-column key gone, the unique slots index, only `service_role` policies, and zero rows; walkthrough passed.
 
 ## Plan corrections
 
-- The pack put two roster components in Stage B, but the build would not compile after Stage A removed tier from the roster types, so they moved into Stage A.
-- The migration originally left the Phase 1 "service role full access" policy on `professionals`. It is tied to the public role, so it would have failed the sprint's own acceptance rule; the migration now drops it too (the preflight showed it existed).
-- The pool-seeding acceptance check could not discriminate right and wrong implementations because the live roster was empty (0 and 0). The rule is correct by reading but unproven.
-- The pack named the pool body `roleIds`; the built API uses `role_ids` to match the rest of the admin API (Decision 063).
-- The roadmap has no sprint for admin password reset or for a development email safeguard. Both showed up during testing (a login lockout and the 4 to 5 inbox need). The Architect should amend the road next session.
-- The blueprint did not say how to treat a stale session after recreating an Auth user. The operator hit "not authorized" until the dev server was restarted. Admin sign-in errors cannot tell "no session" from "no admin record".
+- The pack said "strictly in the future" for proposed times. The operator then asked for greyed-out past times at the gate, then a 48-hour rule, then two full calendar days from midnight. A minimum-notice question belongs in discovery; it changed the server rules, the picker, the calendar, and four plan files after Stage B.
+- The blueprint forbade editing `MonthCalendar`. The notice rule needed a small optional `minDate` prop there, recorded as a deliberate exception.
+- The pack file for Sprint 009 is now older than the sprint files (portability rules, Neon plan, and the notice rule were added to the sprint files after applying). The sprint files are authoritative.
+- Running the preflight one query at a time took many round trips because the SQL editor shows only the last result. Future preflights and post-checks should be written to return one combined result, with a column for the expected value.
+- The Supabase project paused between sessions, which the road did not anticipate. The roadmap now carries the Neon move; Sprint 016 (password reset) moved after it.
+- Sprint 010's scope grew: the development email redirect (Q-011) and the acknowledgement email decision (Q-013) were added to it.
 
 ## Recommended next Architect action
 
-- **Do:** Plan Sprint 009 (client request on the new tables with `/meet/<slug>`, a duration choice, and the home page list of active types) and add a small admin password reset sprint to the road before the beta; include the development email safeguard in Sprint 010.
+- **Do:** Plan Sprint 010 (email foundation): templates stored in the database, real sending through the verified Resend domain, a development setting that redirects all outgoing mail to one inbox, and the client acknowledgement email decision.
 - **Owner:** The Architect, with the operator.
-- **Decision:** Whether password reset is its own sprint or part of Sprint 015, and how Sprint 009 treats the existing public form on `/` while the legacy flow still runs.
+- **Decision:** Which email templates the beta needs (Q-007), whether the client gets an acknowledgement email (Q-013), and which inboxes and sending address to use for testing.
 
-Operator housekeeping: push `sprint-008-meeting-types` and open a pull request when ready, remove or leave inactive the test meeting type and test professionals, start Resend domain verification, and move the installer out of `planning/architect-packs/`.
+Operator housekeeping: push `sprint-009-client-request` and open a pull request when ready, restore the Supabase project whenever it pauses, switch off or remove the walkthrough test meeting type and test requests, and move the installer out of `planning/architect-packs/`.

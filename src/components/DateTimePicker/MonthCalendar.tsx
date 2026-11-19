@@ -17,11 +17,13 @@ import { useMemo, useState } from "react";
 interface MonthCalendarProps {
   selectedDates: string[];
   onToggleDate: (date: string) => void;
+  /** Earliest pickable date (yyyy-MM-dd); earlier days are greyed out. */
+  minDate?: string;
 }
 
 const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function MonthCalendar({ selectedDates, onToggleDate }: MonthCalendarProps) {
+export function MonthCalendar({ selectedDates, onToggleDate, minDate }: MonthCalendarProps) {
   const today = startOfDay(new Date());
   const maxDate = addDays(today, 28);
   const [visibleMonth, setVisibleMonth] = useState(startOfMonth(today));
@@ -74,7 +76,7 @@ export function MonthCalendar({ selectedDates, onToggleDate }: MonthCalendarProp
 
         {days.monthDays.map((day) => {
           const dateValue = format(day, "yyyy-MM-dd");
-          const disabled = isBefore(day, today) || isAfter(day, maxDate);
+          const disabled = isBefore(day, today) || isAfter(day, maxDate) || (minDate !== undefined && dateValue < minDate);
           const selected = selectedDates.includes(dateValue);
           const isToday = isSameDay(day, today);
 

@@ -18,23 +18,31 @@ As of Sprint 007, `planning/ROADMAP.md` defines the road (Sprints 007 to 015). T
 
 ## System Components
 
-### Public Request Form — **Built**
+### Public Request Flow — **Built** (Sprint 009)
 
-**What it does:** Allows an external client to submit a meeting request with contact details, meeting type, and proposed time slots.
+**What it does:** Lets an external client open the link for one active meeting type, choose one of its named lengths, propose times, and submit a request that is saved on the new `requests` and `slots` tables. The server enforces every rule.
 
 **Current files:**
-- `app/page.tsx`
-- `lib/validation.ts`
-- `app/api/meetings/route.ts`
-- `src/components/DateTimePicker/index.tsx`
-- `src/components/DateTimePicker/DurationStep.tsx`
-- `src/components/DateTimePicker/MonthCalendar.tsx`
-- `src/components/DateTimePicker/TimeSlotEditor.tsx`
-- `src/components/DateTimePicker/types.ts`
+- `app/page.tsx` (list of active meeting types) and `app/meet/[slug]/page.tsx`, `not-found.tsx`
+- `src/components/MeetingRequest/RequestForm.tsx` (form, hidden trap field, "request received" panel)
+- `src/components/DateTimePicker/` (`index.tsx`, `types.ts`, `DurationStep.tsx`, `TimeSlotEditor.tsx`, `MonthCalendar.tsx`): takes its lengths and time zone from the meeting type; `MonthCalendar` greys out days before the earliest allowed day
+- `app/api/meet/[slug]/requests/route.ts` (public `POST`)
+- `lib/slot-rules.ts` (pure slot rules), `lib/requests.ts` (request validation), `lib/db/requests.ts` (the only data access for this flow)
+- `supabase/migrations/009_requests_new_model.sql`, with `supabase/preflight/009_preflight.sql`, `009_postcheck.sql`, and `supabase/rollbacks/009_requests_new_model_rollback.sql`
 
-**Current behavior:** The form collects `clientName`, `clientEmail`, `meetingType`, and proposed start times through a composed date/time picker. Meeting type controls duration, end time is derived client-side before API submission, the calendar is Sunday-first, and selectable dates are constrained to today through 28 days from today. Time slot options on the same date are blocked when they would overlap an existing slot plus a 15-minute buffer. The route validates with zod and posts ISO `startsAt` / `endsAt` slot ranges to `POST /api/meetings`.
+**Current behavior:** Only active meeting types are public; an unknown or switched-off link shows a not-found page. The client sends name, email, a duration id, and start times only. The server derives end times from the chosen duration and rejects times before the day two full calendar days ahead (midnight in the business time zone), more than 29 days ahead, off the 15-minute grid or outside 07:00 to 21:00, duplicated, too close together (length plus 15 minutes), or more than 30 in number. A filled hidden trap field returns success and saves nothing. The request is saved with status `pending`; no email is sent and no professional is notified yet. Tables used: `meeting_types`, `meeting_type_durations`, `platform_settings`, `requests`, `slots`. `requests` and `slots` are server-only through row level security.
 
-**Remaining gaps:** Downstream status pages, voting pages, and email helpers still contain legacy Participant / Team Member assumptions and are intentionally deferred to future sprints.
+**Legacy:** `app/api/meetings/route.ts`, `lib/validation.ts`, `/meetings/[id]`, and `/team/meetings/[id]` still exist but are no longer linked from any page. They are retired in Sprint 014.
+
+**Not built yet:** acknowledgement or notification emails (Sprint 010), professional response links (Sprint 011), threshold and pairing (Sprint 012), client confirmation (Sprint 013).
+
+### Admin Requests List — **Built** (Sprint 009)
+
+**What it does:** Shows admins the latest client requests, read-only.
+
+**Current files:** `app/admin/(protected)/requests/page.tsx`, `src/components/Requests/RequestList.tsx`, `app/api/admin/requests/route.ts`, `lib/db/requests.ts`.
+
+**Current behavior:** Newest first, up to 100 requests, with client name and email, meeting type, length, proposed times in the business time zone, status, and received time. Admins and Super Admins can see it. No actions yet (Sprint 012).
 
 ### Magic Link System — **Planned**
 
@@ -163,7 +171,7 @@ As of Sprint 007, `planning/ROADMAP.md` defines the road (Sprints 007 to 015). T
 **Current behavior:**
 - `POST /api/meetings` validates the Sprint 004 request shape, inserts `client_name`, `client_email`, and `meeting_type` into `meetings`, inserts `time_slots`, loads active legacy `team_members`, and sends notification emails.
 - `POST /api/responses` validates input, checks pending status, upserts legacy `responses`, runs quorum logic, updates confirmation fields, and sends confirmation emails.
-- Admin routes under `/api/admin/*` (roster, meeting types, identity) are documented in `docs/API.md`.
+- Admin routes under `/api/admin/*` (roster, meeting types, requests, identity) and the public `POST /api/meet/[slug]/requests` are documented in `docs/API.md`. The two routes listed above are the legacy flow, retired in Sprint 014.
 
 **Planned domain behavior:** Future routes will be needed for magic link validation, professional response editing, admin pairing approval, client confirmation/cancellation, admin roster management, Super Admin settings, email template management, and scheduled-job actions.
 

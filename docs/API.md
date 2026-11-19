@@ -118,3 +118,31 @@ Tier is no longer read or written by the app (Decision 058).
 ## Identity
 
 `GET /api/admin/me` returns the signed-in admin (`id`, `email`, `name`, `role`).
+
+
+## Requests (Sprint 009)
+
+### `POST /api/meet/[slug]/requests` (public, no sign-in)
+
+A client asks for a meeting of one active meeting type. Nothing is written until every check passes.
+
+**Body (snake_case):**
+```json
+{
+  "client_name": "string (1 to 120)",
+  "client_email": "string (valid email, stored lowercase)",
+  "duration_id": "uuid of one of this meeting type's durations",
+  "starts_at": ["ISO date-time (UTC, Z), 1 to 30 items"],
+  "website": "hidden trap field; must be empty"
+}
+```
+
+**Rules:** start times must be on or after the day two full calendar days ahead (midnight in the business time zone), at most 29 days ahead, on a 15-minute mark between 07:00 and 21:00 business time, unique, and at least duration plus 15 minutes apart. No end times are accepted; the server derives them.
+
+**Responses:** `201 { "ok": true }` saved (the request id is not returned); `200 { "ok": true }` when the trap field is filled (nothing saved); `400 { "error": "plain message" }` invalid input, a length that is not one of the type's, or a rule failure; `404` unknown or switched-off link; `500` generic.
+
+### `GET /api/admin/requests` (Admin or Super Admin)
+
+Returns `{ "requests": [...] }`, newest first, up to 100. Each item has `id`, `clientName`, `clientEmail`, `status`, `createdAt`, `businessTimezone`, `meetingType { title, slug }`, `duration { label, minutes }`, and `slots` (ISO start times, ascending). `401` when not signed in.
+
+> Note: the `POST /api/meetings` and `POST /api/responses` routes at the top of this file belong to the legacy flow and are retired in Sprint 014.

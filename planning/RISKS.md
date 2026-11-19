@@ -1,6 +1,6 @@
 # Group Meet — Risks
 
-**Last updated:** 2026-11-12 (Sprint 008)
+**Last updated:** 2026-11-19 (Sprint 009)
 
 R-001 to R-005 described the Sprint 001 legacy quorum flow (no quorum reached, forwarded voting links, Resend failure, duplicate quorum trigger, duplicate requests). They are archived in this file's git history before Sprint 007 and are retired with the legacy flow in Sprint 014. R-004 and R-005 should be re-checked against the domain workflow when Sprints 009 and 012 are planned.
 
@@ -61,3 +61,17 @@ R-001 to R-005 described the Sprint 001 legacy quorum flow (no quorum reached, f
 **Likelihood:** Medium (already hit once during Sprint 008 testing).
 **Impact:** High — no admin access.
 **Mitigation now:** set or change passwords directly in the Supabase dashboard (Authentication, Users). **Plan:** add a small guarded sprint before the beta (see the briefing's Plan corrections).
+
+## R-016: Public request endpoint is unthrottled
+**Risk:** `POST /api/meet/[slug]/requests` has only a hidden trap field and a 30-slot cap. Automated spam could fill `requests` with junk and, from Sprint 011, trigger emails to professionals.
+**Likelihood:** Low now (the link is not yet public); rises with exposure.
+**Impact:** Medium to High once emails go out.
+**Mitigation planned:** the development email redirect in Sprint 010, platform-level rate limiting when the app is deployed, and a review of CAPTCHA before the beta. Revisit at Sprint 011.
+
+## R-017: Supabase free plan pauses an idle project
+**Risk:** Supabase's free plan pauses a project after about a week with no activity, making the database unreachable until the operator restores it. Observed on 2026-11-19, a week after Sprint 008. A paused database breaks the public request page.
+**Likelihood:** High whenever work pauses for a week.
+**Impact:** Medium during development, High after launch.
+**Mitigation:** restore by hand and keep gaps between sessions short for now; each sprint's operator steps count as activity. The planned move to Neon (Sprints 017 and 018, decision point at Sprint 013) removes it.
+
+**Updates (Sprint 009):** R-005 (duplicate requests): still accepted by design (Decision 067). R-009: `requests` and `slots` no longer have a public-role policy; only the legacy tables keep permissive rules until Sprint 014.

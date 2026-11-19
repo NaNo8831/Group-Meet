@@ -5,15 +5,13 @@ import { MoreVertical, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_START_TIME,
-  MEETING_DURATIONS,
   formatTimeLabel,
   getTimeOptions,
-  type MeetingType,
   type TimeSlot
 } from "./types";
 
 interface TimeSlotEditorProps {
-  meetingType: MeetingType;
+  durationMinutes: number;
   selectedDates: string[];
   slots: TimeSlot[];
   onChange: (slots: TimeSlot[]) => void;
@@ -121,8 +119,8 @@ function SlotMenu({
   );
 }
 
-export function TimeSlotEditor({ meetingType, selectedDates, slots, onChange, onRemoveDate }: TimeSlotEditorProps) {
-  const duration = MEETING_DURATIONS[meetingType];
+export function TimeSlotEditor({ durationMinutes, selectedDates, slots, onChange, onRemoveDate }: TimeSlotEditorProps) {
+  const duration = durationMinutes;
 
   if (selectedDates.length === 0) {
     return (

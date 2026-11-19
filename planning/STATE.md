@@ -1,7 +1,7 @@
 # Group Meet — Project State
 
-**Last Updated:** 2026-11-12 — Sprint 008 complete: Meeting Types, Roles, and Pools
-**Status:** SPRINT 008 COMPLETE — admins can create meeting types with named durations, roles with required counts, and pools of professionals. Migration 008 is applied to the live database and `professionals` is now server-only. Branch `sprint-008-meeting-types` holds the work locally (not pushed). Next: Sprint 009, client request on the new tables with a link per meeting type. Known gap: no admin password reset (R-015).
+**Last Updated:** 2026-11-19 — Sprint 009 complete: Client Request on the New Tables
+**Status:** SPRINT 009 COMPLETE — a client can open `/meet/<slug>` for an active meeting type, choose a length, propose times (at least two full calendar days ahead), and submit; the request is saved on `requests` and `slots` with server-enforced rules, and admins see it on `/admin/requests`. Migration 009 is applied. Branch `sprint-009-client-request` holds the work locally (not pushed). Next: Sprint 010, email foundation. Known gaps: no email is sent yet, no admin password reset (R-015), and the Supabase free plan pauses when idle (R-017).
 
 ## What Exists
 - GitHub repo: https://github.com/NaNo8831/Group-Meet
@@ -41,8 +41,24 @@
 - Migration `supabase/migrations/008_meeting_types.sql` (applied), with preflight, post-check, and rollback SQL under `supabase/`
 - Roster page and API no longer show or write tier (Decision 058)
 - Admin header links: Meeting types, Professionals
+- Public home page `/` listing active meeting types; request page `/meet/[slug]`; request API `POST /api/meet/[slug]/requests`
+- Slot rules in `lib/slot-rules.ts`, validation in `lib/requests.ts`, data access in `lib/db/requests.ts` (the first module behind the portability rule)
+- Date/time picker driven by the meeting type's durations and the business time zone; calendar greys out days before the earliest allowed day
+- Admin Requests page `/admin/requests` (read-only) and `GET /api/admin/requests`
+- Migration `supabase/migrations/009_requests_new_model.sql` (applied), with preflight, post-check, and rollback SQL
+- `planning/ROADMAP.md` now runs to about 12 sprints, including a planned move to Neon (Sprints 017 and 018)
 
 ## Recently Completed
+
+### Sprint 009 — Client Request on the New Tables
+
+Completed:
+- Stage A: migration 009 (required links, composite key tying a request's length to its meeting type, unique slot starts, server-only access on `requests` and `slots`), pure slot rules, request validation, the `lib/db/requests.ts` data module, the public request route, and the admin requests route. Operator ran the preflight, applied the migration twice, and ran the post-check.
+- Stage B: picker refactor, public pages (`/`, `/meet/[slug]`, not-found), request form with hidden trap field and "request received" panel, admin Requests page and nav link.
+- Operator amendments during the walkthrough: past times greyed out, then the notice rule: two full calendar days ahead from midnight in the business time zone (Decision 066 amended; one small `minDate` prop added to `MonthCalendar`).
+- Decisions 064 to 072 recorded; R-016 and R-017 added; Q-013 added; DOMAIN rule 26 added.
+
+Validation: `npx tsc --noEmit` and `npm run build` pass; 29 slot-rule cases pass; rejection cases and signed-out paths checked against the dev server; operator post-check and walkthrough passed. No automated tests exist.
 
 ### Sprint 008 — Meeting Types, Roles, and Pools
 
@@ -54,30 +70,17 @@ Completed:
 
 Validation: `npx tsc --noEmit` and `npm run build` pass; signed-out requests are redirected or refused; operator post-check and walkthrough passed. No automated tests exist.
 
-### Sprint 007 — Stabilize and Align
-
-Completed:
-- Method files committed on branch `chore/sprint-007-stabilize` (local, not pushed)
-- `.gitignore` now tracks Architect Pack Markdown files; the large installer in that folder stays ignored and untouched
-- `planning/DOMAIN.md`, `planning/DECISIONS.md` (047 to 056), `planning/RISKS.md`, `planning/QUESTIONS.md`, `docs/DATA_MODEL.md`, `docs/ARCHITECTURE.md`, and `AGENTS.md` aligned to the domain workflow and meeting-type model
-- `docs/ARCHITECT_BRIEFING_SPEC.md` created
-- Older STATE history moved verbatim to `planning/archive/STATE-through-sprint-005.md`
-
-Validation: `npx tsc --noEmit` clean; `npm run build` passed (12 routes). No application code changed.
-
-Older history: `planning/archive/STATE-through-sprint-005.md` and `planning/archive/STATE-sprint-006.md`.
+Older history: `planning/archive/STATE-through-sprint-005.md`, `STATE-sprint-006.md`, and `STATE-sprint-007.md`.
 
 ## Next Actions
 
-- Sprint 009: client request on the new tables, a link per meeting type (`/meet/<slug>`), and the home page list of active types (guarded if it changes data)
-- Architect: plan an admin password reset sprint before the beta (R-015, Q-012)
-- Architect: decide the development email safeguard and test inboxes with Sprint 010 (Q-011)
-- Operator: push `sprint-008-meeting-types` and open a pull request when ready; start Resend sending-domain verification; move the installer out of `planning/architect-packs/`
-- Operator: remove or leave inactive the walkthrough test meeting type and test professionals
+- Sprint 010: email foundation (templates in the database, real sending through the verified Resend domain, a development setting that redirects all outgoing mail to one inbox; decide the client acknowledgement email, Q-013). Guarded: it sends real email.
+- Operator: push `sprint-009-client-request` and open a pull request when ready; restore the Supabase project whenever it pauses; remove or switch off the walkthrough test meeting type and requests; move the installer out of `planning/architect-packs/`
+- Architect (when Sprint 013 closes): confirm or cancel the move to Neon (Q-014)
 
 ## Blockers
 
-- Resend sending domain is not verified; email reaches only the account owner (R-008)
-- Live end-to-end submission has not been validated against Supabase and Resend
+- The Resend sending domain is reported verified by the operator, but no email has been sent by the app yet (R-008 to be closed in Sprint 010)
+- Supabase free plan pauses idle projects (R-017)
 - Vercel project linkage and production environment variables are not validated
 - `npm audit` advisories are unreviewed (R-006, R-012)

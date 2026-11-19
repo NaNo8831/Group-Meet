@@ -1,6 +1,6 @@
 # Domain Context
 **Project:** Group Meet  
-**Last updated:** 2026-11-06 (Sprint 007: aligned to Decisions 047 to 056 - admin-defined meeting types, named durations, roles with required counts, pools)
+**Last updated:** 2026-11-19 (Sprint 009: client request rules)
 
 ---
 
@@ -92,7 +92,7 @@ All slots are stored and displayed in the configured business timezone. Default 
 ### 1. Client submits request
 - Client opens the shareable link for one meeting type (or picks it from the public list of active meeting types)
 - Public form: name, email, and one of the meeting type's named duration options — the client never types a duration
-- Client proposes available dates and times using the date/time picker
+- Client proposes available dates and times using the date/time picker, starting no earlier than two full calendar days ahead (counted from midnight in the business timezone)
 - All times are in the platform business timezone
 
 ### 2. Professionals are notified
@@ -186,6 +186,7 @@ All slots are stored and displayed in the configured business timezone. Default 
 23. Admin dashboard shows only active requests — no historical view of completed or cancelled meetings
 24. Professional CSV import requires name + email; pool membership and roles are assigned manually after import
 25. Platform timezone is configurable by Super Admin; default is US/Eastern
+26. A client's proposed times must start on or after the day two full calendar days ahead (counted from midnight in the business timezone), at most 29 days ahead, on a 15-minute mark between 7:00 AM and 9:00 PM, with at most 30 times, no duplicates, and any two at least the chosen duration plus 15 minutes apart
 
 ---
 
