@@ -6,7 +6,7 @@ import { formatInTimeZone } from "date-fns-tz";
 // the time zone database and never by a fixed offset.
 
 export const MAX_SLOTS = 30;
-export const MIN_HOURS_AHEAD = 48;
+export const MIN_DAYS_AHEAD = 2; // two full calendar days, counted from midnight in the business time zone
 export const MAX_DAYS_AHEAD = 29;
 export const GRID_MINUTES = 15;
 export const EARLIEST_MINUTE_OF_DAY = 7 * 60; // 07:00
@@ -30,6 +30,25 @@ function fail(message: string): SlotCheck {
   return { ok: false, message };
 }
 
+/**
+ * The first calendar date (yyyy-MM-dd, in the business time zone) a client may request:
+ * today plus MIN_DAYS_AHEAD days, counted from midnight. Plain calendar arithmetic, so
+ * daylight saving never shifts it.
+ */
+export function earliestRequestDate(now: Date, timeZone: string): string {
+  const [year, month, day] = formatInTimeZone(now, timeZone, "yyyy-MM-dd").split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + MIN_DAYS_AHEAD)).toISOString().slice(0, 10);
+}
+
+function formatDateLabel(isoDate: string): string {
+  return new Date(`${isoDate}T12:00:00Z`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  });
+}
+
 function formatClock(totalMinutes: number): string {
   const hours24 = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -46,7 +65,7 @@ export function validateSlots({ startsAt, minutes, now, timeZone }: ValidateSlot
     return fail(`Choose no more than ${MAX_SLOTS} times.`);
   }
 
-  const earliest = now.getTime() + MIN_HOURS_AHEAD * 60 * 60 * 1000;
+  const earliestDate = earliestRequestDate(now, timeZone);
   const latest = now.getTime() + MAX_DAYS_AHEAD * 24 * 60 * 60 * 1000;
   const starts: number[] = [];
 
@@ -57,8 +76,10 @@ export function validateSlots({ startsAt, minutes, now, timeZone }: ValidateSlot
     if (Number.isNaN(time)) {
       return fail("One of the times is not a valid date and time.");
     }
-    if (time < earliest) {
-      return fail(`Meetings can only be requested at least ${MIN_HOURS_AHEAD} hours ahead. Choose a later time.`);
+    if (formatInTimeZone(date, timeZone, "yyyy-MM-dd") < earliestDate) {
+      return fail(
+        `Meetings can only be requested from ${formatDateLabel(earliestDate)} onward (${MIN_DAYS_AHEAD} full days ahead). Choose a later date.`
+      );
     }
     if (time > latest) {
       return fail(`Choose times within the next ${MAX_DAYS_AHEAD} days.`);

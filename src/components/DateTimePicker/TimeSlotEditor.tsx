@@ -7,13 +7,11 @@ import {
   DEFAULT_START_TIME,
   formatTimeLabel,
   getTimeOptions,
-  isTooSoon,
   type TimeSlot
 } from "./types";
 
 interface TimeSlotEditorProps {
   durationMinutes: number;
-  timeZone: string;
   selectedDates: string[];
   slots: TimeSlot[];
   onChange: (slots: TimeSlot[]) => void;
@@ -121,14 +119,7 @@ function SlotMenu({
   );
 }
 
-export function TimeSlotEditor({
-  durationMinutes,
-  timeZone,
-  selectedDates,
-  slots,
-  onChange,
-  onRemoveDate
-}: TimeSlotEditorProps) {
+export function TimeSlotEditor({ durationMinutes, selectedDates, slots, onChange, onRemoveDate }: TimeSlotEditorProps) {
   const duration = durationMinutes;
 
   if (selectedDates.length === 0) {
@@ -150,20 +141,12 @@ export function TimeSlotEditor({
     });
   }
 
-  // Times less than 48 hours away (including any already past) are greyed out; the server also refuses them.
-  function isOptionPast(date: string, option: string) {
-    return isTooSoon(date, option, timeZone);
-  }
-
   function firstAvailableTime(date: string) {
-    return timeOptions.find((option) => !isOptionBlocked(date, option) && !isOptionPast(date, option));
+    return timeOptions.find((option) => !isOptionBlocked(date, option));
   }
 
   function addSlot(date: string) {
-    const startTime =
-      !isOptionBlocked(date, DEFAULT_START_TIME) && !isOptionPast(date, DEFAULT_START_TIME)
-        ? DEFAULT_START_TIME
-        : firstAvailableTime(date);
+    const startTime = !isOptionBlocked(date, DEFAULT_START_TIME) ? DEFAULT_START_TIME : firstAvailableTime(date);
     if (!startTime) return;
     onChange([...slots, { date, startTime }]);
   }
@@ -204,7 +187,7 @@ export function TimeSlotEditor({
 
     const newSlots = [...slots];
     for (const targetDate of targetDates) {
-      if (!isOptionBlocked(targetDate, startTime) && !isOptionPast(targetDate, startTime)) {
+      if (!isOptionBlocked(targetDate, startTime)) {
         newSlots.push({ date: targetDate, startTime });
       }
     }
@@ -254,20 +237,11 @@ export function TimeSlotEditor({
                     >
                       {timeOptions
                         .filter((option) => !isOptionBlocked(date, option, index))
-                        .map((option) => {
-                          const past = isOptionPast(date, option);
-                          return (
-                            <option
-                              key={option}
-                              value={option}
-                              disabled={past && option !== slot.startTime}
-                              className={past ? "text-gray-400" : undefined}
-                            >
-                              {formatTimeLabel(option)}
-                              {past ? " (too soon)" : ""}
-                            </option>
-                          );
-                        })}
+                        .map((option) => (
+                          <option key={option} value={option}>
+                            {formatTimeLabel(option)}
+                          </option>
+                        ))}
                     </select>
 
                     <SlotMenu

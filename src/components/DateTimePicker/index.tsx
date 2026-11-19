@@ -1,14 +1,15 @@
 "use client";
 
+import { format, parseISO } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { DurationStep } from "./DurationStep";
 import { MonthCalendar } from "./MonthCalendar";
 import { TimeSlotEditor } from "./TimeSlotEditor";
 import {
   DEFAULT_START_TIME,
-  getTimeOptions,
-  isTooSoon,
-  MIN_HOURS_AHEAD,
+  MIN_DAYS_AHEAD,
+  earliestRequestDate,
+  isDateTooSoon,
   toApiSlots,
   type ApiSlot,
   type DurationOption,
@@ -24,7 +25,6 @@ interface DateTimePickerProps {
 }
 
 const BUFFER_MINUTES = 15;
-const timeOptions = getTimeOptions();
 
 function toMinutes(value: string) {
   const [hours, minutes] = value.split(":").map(Number);
@@ -61,14 +61,13 @@ export function DateTimePicker({ durations, timeZone, onChange }: DateTimePicker
 
   const apiSlots = useMemo(() => toApiSlots(slots, timeZone), [slots, timeZone]);
 
+  // The first day a client can pick: two full days ahead, counted from midnight in the business time zone.
+  const earliestDate = earliestRequestDate(new Date(), timeZone);
+  const earliestLabel = format(parseISO(`${earliestDate}T00:00:00`), "EEEE, MMM d");
+
   useEffect(() => {
     onChange(apiSlots, durationId);
   }, [apiSlots, durationId, onChange]);
-
-  function firstFutureStartTime(date: string) {
-    if (!isTooSoon(date, DEFAULT_START_TIME, timeZone)) return DEFAULT_START_TIME;
-    return timeOptions.find((option) => !isTooSoon(date, option, timeZone));
-  }
 
   function chooseDuration(id: string) {
     setDurationId(id);
@@ -85,15 +84,14 @@ export function DateTimePicker({ durations, timeZone, onChange }: DateTimePicker
       return;
     }
 
-    // A day with no start time far enough ahead cannot be picked.
-    const startTime = firstFutureStartTime(date);
-    if (!startTime) {
-      setNotice(`Meetings can only be requested at least ${MIN_HOURS_AHEAD} hours ahead. Choose a later date.`);
+    // Days before the earliest allowed day cannot be picked (the calendar greys them out too).
+    if (isDateTooSoon(date, timeZone)) {
+      setNotice(`Meetings can only be requested from ${earliestLabel} onward. Choose a later date.`);
       return;
     }
 
     setSelectedDates((current) => [...current, date].sort());
-    setSlots((current) => [...current, { date, startTime }]);
+    setSlots((current) => [...current, { date, startTime: DEFAULT_START_TIME }]);
   }
 
   function removeDate(date: string) {
@@ -122,19 +120,18 @@ export function DateTimePicker({ durations, timeZone, onChange }: DateTimePicker
         <div className="grid gap-3">
           <h3 className="text-sm font-semibold">Proposed times</h3>
           <p className="text-xs text-muted-foreground">
-            Requests need at least {MIN_HOURS_AHEAD} hours notice. Earlier times are greyed out.
+            Requests need at least {MIN_DAYS_AHEAD} full days notice. The earliest day you can pick is {earliestLabel}.
           </p>
           {notice ? (
             <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">{notice}</p>
           ) : null}
           <div className="flex flex-col gap-4 md:flex-row md:items-start">
             <div className="md:w-[19rem] md:shrink-0">
-              <MonthCalendar selectedDates={selectedDates} onToggleDate={toggleDate} />
+              <MonthCalendar selectedDates={selectedDates} onToggleDate={toggleDate} minDate={earliestDate} />
             </div>
             <div className="min-w-0 flex-1">
               <TimeSlotEditor
                 durationMinutes={duration.minutes}
-                timeZone={timeZone}
                 selectedDates={selectedDates}
                 slots={slots}
                 onChange={setSlots}

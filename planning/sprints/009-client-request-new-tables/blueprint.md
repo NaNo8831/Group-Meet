@@ -59,7 +59,7 @@ Select-only, labeled: the two columns are NOT NULL; the composite foreign key ex
 
 ### A5. `lib/slot-rules.ts` (pure, no Next or Supabase imports; may import `date-fns-tz`)
 
-Exports `validateSlots({ startsAt: string[], minutes: number, now: Date, timeZone: string })` returning `{ ok: true }` or `{ ok: false, message }` with plain messages, and constants for the rules (max 30, max 29 days ahead, grid 15, hours 07:00 to 21:00, buffer 15). Rules exactly as in the requirements (including Amendment 2: at least 48 hours ahead, via the `MIN_HOURS_AHEAD` constant that the picker also reads). Evaluate local time with `toZonedTime` (or `formatInTimeZone`) in the supplied zone so daylight saving is handled by the zone database, never by a fixed offset.
+Exports `validateSlots({ startsAt: string[], minutes: number, now: Date, timeZone: string })` returning `{ ok: true }` or `{ ok: false, message }` with plain messages, and constants for the rules (max 30, max 29 days ahead, grid 15, hours 07:00 to 21:00, buffer 15). Rules exactly as in the requirements (including Amendment 2: two full calendar days ahead from midnight in the business time zone, via `MIN_DAYS_AHEAD` and `earliestRequestDate`, which the picker also reads). Evaluate local time with `toZonedTime` (or `formatInTimeZone`) in the supplied zone so daylight saving is handled by the zone database, never by a fixed offset.
 
 ### A6. `lib/requests.ts` (pure) and `lib/db/requests.ts` (data access)
 
@@ -111,7 +111,7 @@ Plain Tailwind in the style of the existing pages. Server components load data w
 - `types.ts`: remove `MeetingType`, `MEETING_DURATIONS`, `Duration`, and `BUSINESS_TIMEZONE`. `toApiSlots(slots, minutes, timeZone)` returns `{ startsAt }` values (ISO) using `fromZonedTime(..., timeZone)`; drop `endsAt`. Keep `getTimeOptions`, `formatTimeLabel`, `DEFAULT_START_TIME`.
 - `DurationStep.tsx`: renders cards from a `durations: { id, label, minutes }[]` prop (label plus "N min"). Selected id is controlled by the parent.
 - `TimeSlotEditor.tsx`: replace the `meetingType` prop with `durationMinutes: number`; the overlap rule is otherwise unchanged.
-- `index.tsx`: props `durations`, `timeZone`, `onChange(slots: { startsAt: string }[], durationId: string | null)`. If there is exactly one duration, select it automatically and hide the choice step. `MonthCalendar.tsx` is not edited.
+- `index.tsx`: props `durations`, `timeZone`, `onChange(slots: { startsAt: string }[], durationId: string | null)`. If there is exactly one duration, select it automatically and hide the choice step. `MonthCalendar.tsx` gets only an optional `minDate` prop to grey out days before the earliest allowed day (Amendment 2).
 
 ### B2. Public pages
 
