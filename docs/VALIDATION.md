@@ -86,3 +86,20 @@ Evidence (2026-11-12):
 - Operator ran the preflight, migration `008` twice, and the post-check in the Supabase SQL editor: five new tables with row security on and only `service_role` policies; no non-server policy on `professionals`; two seeded types with the expected durations and roles; `requests` new columns nullable.
 - Not exercised: the pool-seeding rule (roster was empty), the role-integrity rule beyond viewing its constraint, and automated tests (none exist).
 - Operator walkthrough passed: create a meeting type, refused activation without a duration and role, add durations and roles, assign a pool, activate, and view the list.
+
+
+## Sprint 009 Validation
+
+Rules enforced on the server (`lib/slot-rules.ts`, `lib/requests.ts`) and, for integrity, by the database:
+- Name 1 to 120 characters; email valid, at most 254, stored lowercase; the duration must belong to the meeting type (composite foreign key).
+- Start times: on or after the day two full calendar days ahead (midnight, business time zone); at most 29 days ahead; 15-minute marks from 07:00 to 21:00; 1 to 30 times; unique; at least length plus 15 minutes apart. A `slots` row cannot repeat a start within a request.
+- A filled hidden trap field returns success and saves nothing.
+
+Evidence (2026-11-19):
+- `npx tsc --noEmit` and `npm run build` exit 0.
+- Slot rules run on their own with a fixed "now": 29 cases pass, including spacing (45 and 75 minute lengths), today and tomorrow refused and the day after tomorrow accepted, a late-evening case where a 48-hour clock rule and the calendar-day rule disagree, a case across the March daylight saving change, 07:00 and 06:00 in daylight and standard time, the 30-day and 30-time limits, duplicates, off-grid minutes, and the `US/Eastern` alias.
+- Public endpoint rejection cases against the dev server (nothing written): invalid JSON, missing or bad fields, no times, unknown link, and a switched-off link return 400 or 404; the trap field returns 200 without a database write. `GET /api/admin/requests` returns 401 signed out.
+- Pages signed out: `/` returns 200; `/meet/<unknown or switched-off>` returns 404; `/admin/requests` redirects to `/admin/login`.
+- Operator ran the preflight, migration `009` twice, and the post-check in the Supabase SQL editor (required links `NO` nullable, composite key present, single-column key gone, unique slots index, only `service_role` policies, zero rows).
+- Operator walkthrough passed: active meeting type listed on `/`, landing page and length choice, times picked and refused correctly, a real request submitted and shown on the admin Requests page with correct times, turning the type off removes it, and the notice rule re-checked after each change.
+- Not exercised: a failed slots insert (the clean-up of the request), a flood of requests, and automated tests (none exist).

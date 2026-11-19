@@ -480,6 +480,18 @@ In the database these were text columns with check constraints, not enum types. 
 - `requests` rows with an old `meeting_type` value are backfilled to the matching seeded type (there were none).
 - Row level security: the five new tables and `professionals` allow only the `service_role` role.
 
+## Sprint 009 changes (built; applied to the live database 2026-11-19)
+
+Migration `supabase/migrations/009_requests_new_model.sql`:
+- `requests.meeting_type_id` and `requests.duration_id` are now required (`NOT NULL`). The old text `meeting_type` column stays, nullable, until Sprint 014.
+- Composite foreign key `requests_duration_meeting_type_fkey` on (`duration_id`, `meeting_type_id`) to `meeting_type_durations (id, meeting_type_id)` (restrict on delete), so a request's duration must belong to its meeting type. A new unique pair `meeting_type_durations_id_meeting_type_id_key` supports it. The earlier single-column `requests_duration_id_fkey` was removed.
+- `slots`: unique index `slots_request_id_starts_at_key` on (`request_id`, `starts_at`), so a request cannot repeat a start. Only the start is stored; the end is always start plus the chosen duration (Decision 049).
+- Indexes on `requests (meeting_type_id)` and `requests (created_at desc)`.
+- `requests` and `slots` are server-only: the public-role `service role full access` policies were replaced by `requests_service_role_all` and `slots_service_role_all` for the `service_role` role only.
+
+A new request is saved with `status = pending`, `business_timezone` copied from `platform_settings`, the lowercase trimmed client email, and `created_by_admin_id` empty.
+
+
 ## Open Questions
 
 1. Legacy Sprint 001 tables exist: `team_members`, `meetings`, `time_slots`, and `responses`. Migration is required, but the strategy is intentionally deferred to a future sprint. The future decision must choose whether to rename, transform, replace, or archive these tables.
