@@ -5,15 +5,15 @@ import { MoreVertical, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_START_TIME,
-  MEETING_DURATIONS,
   formatTimeLabel,
   getTimeOptions,
-  type MeetingType,
+  isPastTime,
   type TimeSlot
 } from "./types";
 
 interface TimeSlotEditorProps {
-  meetingType: MeetingType;
+  durationMinutes: number;
+  timeZone: string;
   selectedDates: string[];
   slots: TimeSlot[];
   onChange: (slots: TimeSlot[]) => void;
@@ -121,8 +121,15 @@ function SlotMenu({
   );
 }
 
-export function TimeSlotEditor({ meetingType, selectedDates, slots, onChange, onRemoveDate }: TimeSlotEditorProps) {
-  const duration = MEETING_DURATIONS[meetingType];
+export function TimeSlotEditor({
+  durationMinutes,
+  timeZone,
+  selectedDates,
+  slots,
+  onChange,
+  onRemoveDate
+}: TimeSlotEditorProps) {
+  const duration = durationMinutes;
 
   if (selectedDates.length === 0) {
     return (
@@ -143,12 +150,20 @@ export function TimeSlotEditor({ meetingType, selectedDates, slots, onChange, on
     });
   }
 
+  // Times that have already passed today are greyed out (the server also refuses them).
+  function isOptionPast(date: string, option: string) {
+    return isPastTime(date, option, timeZone);
+  }
+
   function firstAvailableTime(date: string) {
-    return timeOptions.find((option) => !isOptionBlocked(date, option));
+    return timeOptions.find((option) => !isOptionBlocked(date, option) && !isOptionPast(date, option));
   }
 
   function addSlot(date: string) {
-    const startTime = !isOptionBlocked(date, DEFAULT_START_TIME) ? DEFAULT_START_TIME : firstAvailableTime(date);
+    const startTime =
+      !isOptionBlocked(date, DEFAULT_START_TIME) && !isOptionPast(date, DEFAULT_START_TIME)
+        ? DEFAULT_START_TIME
+        : firstAvailableTime(date);
     if (!startTime) return;
     onChange([...slots, { date, startTime }]);
   }
@@ -189,7 +204,7 @@ export function TimeSlotEditor({ meetingType, selectedDates, slots, onChange, on
 
     const newSlots = [...slots];
     for (const targetDate of targetDates) {
-      if (!isOptionBlocked(targetDate, startTime)) {
+      if (!isOptionBlocked(targetDate, startTime) && !isOptionPast(targetDate, startTime)) {
         newSlots.push({ date: targetDate, startTime });
       }
     }
@@ -239,11 +254,20 @@ export function TimeSlotEditor({ meetingType, selectedDates, slots, onChange, on
                     >
                       {timeOptions
                         .filter((option) => !isOptionBlocked(date, option, index))
-                        .map((option) => (
-                          <option key={option} value={option}>
-                            {formatTimeLabel(option)}
-                          </option>
-                        ))}
+                        .map((option) => {
+                          const past = isOptionPast(date, option);
+                          return (
+                            <option
+                              key={option}
+                              value={option}
+                              disabled={past && option !== slot.startTime}
+                              className={past ? "text-gray-400" : undefined}
+                            >
+                              {formatTimeLabel(option)}
+                              {past ? " (past)" : ""}
+                            </option>
+                          );
+                        })}
                     </select>
 
                     <SlotMenu

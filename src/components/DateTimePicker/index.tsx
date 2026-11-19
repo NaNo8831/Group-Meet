@@ -6,32 +6,73 @@ import { MonthCalendar } from "./MonthCalendar";
 import { TimeSlotEditor } from "./TimeSlotEditor";
 import {
   DEFAULT_START_TIME,
+  getTimeOptions,
+  isPastTime,
   toApiSlots,
   type ApiSlot,
-  type MeetingType,
+  type DurationOption,
   type TimeSlot
 } from "./types";
 
 interface DateTimePickerProps {
-  onChange: (slots: ApiSlot[], meetingType: MeetingType | null) => void;
+  /** The lengths the client can choose from, defined on the meeting type. */
+  durations: DurationOption[];
+  /** The business time zone the times are read in, supplied by the server. */
+  timeZone: string;
+  onChange: (slots: ApiSlot[], durationId: string | null) => void;
 }
 
-export function DateTimePicker({ onChange }: DateTimePickerProps) {
-  const [meetingType, setMeetingType] = useState<MeetingType | null>(null);
+const BUFFER_MINUTES = 15;
+const timeOptions = getTimeOptions();
+
+function toMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+/** When the length changes, drop times on the same day that no longer fit with the length plus buffer. */
+function pruneConflicts(slots: TimeSlot[], minutes: number): TimeSlot[] {
+  const kept: TimeSlot[] = [];
+  const ordered = [...slots].sort((a, b) =>
+    a.date === b.date ? toMinutes(a.startTime) - toMinutes(b.startTime) : a.date.localeCompare(b.date)
+  );
+
+  for (const slot of ordered) {
+    const conflicts = kept.some(
+      (other) =>
+        other.date === slot.date &&
+        Math.abs(toMinutes(other.startTime) - toMinutes(slot.startTime)) < minutes + BUFFER_MINUTES
+    );
+    if (!conflicts) kept.push(slot);
+  }
+
+  // Keep the original order so the editor does not jump around.
+  return slots.filter((slot) => kept.includes(slot));
+}
+
+export function DateTimePicker({ durations, timeZone, onChange }: DateTimePickerProps) {
+  const [durationId, setDurationId] = useState<string | null>(durations.length === 1 ? durations[0].id : null);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
 
-  const apiSlots = useMemo(() => {
-    if (!meetingType) {
-      return [];
-    }
+  const duration = durations.find((option) => option.id === durationId) ?? null;
 
-    return toApiSlots(slots, meetingType);
-  }, [meetingType, slots]);
+  const apiSlots = useMemo(() => toApiSlots(slots, timeZone), [slots, timeZone]);
 
   useEffect(() => {
-    onChange(apiSlots, meetingType);
-  }, [apiSlots, meetingType, onChange]);
+    onChange(apiSlots, durationId);
+  }, [apiSlots, durationId, onChange]);
+
+  function firstFutureStartTime(date: string) {
+    if (!isPastTime(date, DEFAULT_START_TIME, timeZone)) return DEFAULT_START_TIME;
+    return timeOptions.find((option) => !isPastTime(date, option, timeZone));
+  }
+
+  function chooseDuration(id: string) {
+    setDurationId(id);
+    const chosen = durations.find((option) => option.id === id);
+    if (chosen) setSlots((current) => pruneConflicts(current, chosen.minutes));
+  }
 
   function toggleDate(date: string) {
     if (selectedDates.includes(date)) {
@@ -40,8 +81,12 @@ export function DateTimePicker({ onChange }: DateTimePickerProps) {
       return;
     }
 
+    // A day with no start time left (for example today after 9 PM) cannot be picked.
+    const startTime = firstFutureStartTime(date);
+    if (!startTime) return;
+
     setSelectedDates((current) => [...current, date].sort());
-    setSlots((current) => [...current, { date, startTime: DEFAULT_START_TIME }]);
+    setSlots((current) => [...current, { date, startTime }]);
   }
 
   function removeDate(date: string) {
@@ -49,14 +94,24 @@ export function DateTimePicker({ onChange }: DateTimePickerProps) {
     setSlots((current) => current.filter((slot) => slot.date !== date));
   }
 
+  if (durations.length === 0) {
+    return (
+      <p className="rounded-md border bg-white p-4 text-sm text-muted-foreground">
+        This meeting type has no lengths set up yet.
+      </p>
+    );
+  }
+
   return (
     <div className="grid gap-4">
-      <div className="grid gap-2">
-        <h3 className="text-sm font-semibold">Meeting type</h3>
-        <DurationStep value={meetingType} onChange={setMeetingType} />
-      </div>
+      {durations.length > 1 ? (
+        <div className="grid gap-2">
+          <h3 className="text-sm font-semibold">Meeting length</h3>
+          <DurationStep durations={durations} value={durationId} onChange={chooseDuration} />
+        </div>
+      ) : null}
 
-      {meetingType ? (
+      {duration ? (
         <div className="grid gap-3">
           <h3 className="text-sm font-semibold">Proposed times</h3>
           <div className="flex flex-col gap-4 md:flex-row md:items-start">
@@ -65,7 +120,8 @@ export function DateTimePicker({ onChange }: DateTimePickerProps) {
             </div>
             <div className="min-w-0 flex-1">
               <TimeSlotEditor
-                meetingType={meetingType}
+                durationMinutes={duration.minutes}
+                timeZone={timeZone}
                 selectedDates={selectedDates}
                 slots={slots}
                 onChange={setSlots}
@@ -79,4 +135,4 @@ export function DateTimePicker({ onChange }: DateTimePickerProps) {
   );
 }
 
-export type { ApiSlot, MeetingType } from "./types";
+export type { ApiSlot, DurationOption } from "./types";

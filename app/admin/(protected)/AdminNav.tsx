@@ -27,6 +27,12 @@ export default function AdminNav({ email }: { email: string }) {
               Meeting types
             </Link>
             <Link
+              href="/admin/requests"
+              className="text-gray-600 transition-colors hover:text-gray-900"
+            >
+              Requests
+            </Link>
+            <Link
               href="/admin/professionals"
               className="text-gray-600 transition-colors hover:text-gray-900"
             >
